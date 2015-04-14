@@ -63,8 +63,10 @@ class TimeTracker:
         f = open(logLocation,"r")
         for line in f:
             line =line.strip()
-            if line == '':
+            if line == '' or line[0] == '|':
+                " Note: a bar '|' indicates a comment to ignore "
                 pass
+
             elif line == 'log':
                 # Should start at 0, but prev set to 1 if missing header
                 self.nDays = 0
@@ -193,34 +195,70 @@ class TimeTracker:
                         self.table[j][col] += 1
 
 
-    def printTable(self):
-        ''' Print table of stats (nicely) '''
+    def printTable(self, recent=0, raw=0, day='', start='', end=''):
+        '''
+        Print table of stats (nicely)
+        Options:
+            'day' is for a single day
+            'start' and 'end' are for a range
+            'recent' is just the most recent (single) day
+            'raw' takes out all labels, so just raw data
+        '''
 
-        # Pick out categs to print and their formatting
+        # Pick out categs and their formatting to print
         sections = []
-        sections.append((['day'],'{:>5}'))
+        if not raw:
+            sections.append((['day'],'{:>5}'))
         sections.append((['t','tt','ttt'], '{:5.1f}'))
         sections.append((['b','bb','bbb'], '{:5.1f}'))
         sections.append((['f','ff'], '{:5.1f}'))
         sections.append((['org','tot','mis'],'{:5.1f}'))
+        sections.append(([],''))
         sections.append((['tsk','brk','fxd'],'{:5}'))
 
+
+        # Set default days to print
+        iStart = 0
+        iEnd = self.nDays - 1
+
+        # Find arr pos of each date
+        for i in range(self.nDays):
+            if day == self.table['day'][i]:
+                iStart = i
+                iEnd = i
+            if start == self.table['day'][i]:
+                iStart = i
+            if end == self.table['day'][i]:
+                iEnd = i
+
+        # Option 'recent' take highest precedent
+        if recent:
+            iStart = self.nDays - 1
+            iEnd = iStart
+
+
+        # Final forloop to print all
         for (categs,fmt) in sections:
             for categ in categs:
-                print '{:3}'.format(categ),
-                for i in self.table[categ]:
-                    print fmt.format(i),
+                if not raw:
+                    print '{:3}'.format(categ),
+                for i in range(iStart, iEnd+1):
+                    print fmt.format(self.table[categ][i]),
                 print
             print
 
-    def printEvents(self, day='', label='', include='', exclude=''):
+    def printEvents(self, recent=0, day='', label='', include='', exclude=''):
         '''
         Prints selected lines in self.events
         Here are some options:
             'day' is month/day (same format as 'date')
             'label' is category (same format as 'categ')
             'include' and 'exclude' are str matches
+            'recent' is only for most recent day (overrides 'day')
         '''
+        if recent:
+            day = self.events[-2][0]
+
         total = 0
         for event in self.events:
             date = event[0]
@@ -256,9 +294,18 @@ def main():
     t.extractData(logDir + logFile)
     t.makeTable()
 
-    t.printTable()
+    #t.printTable()
+    #t.printTable(recent=0,raw=0,day='',start='',end='')
+    t.printTable(recent=1,raw=1)
+    #t.printTable(recent=1)
+    #t.printTable(day='5/9')
+    #t.printTable(start='5/8',end='5/11')
+    #t.printTable(start='5/8')
+    #t.printTable(end='5/8')
 
-    #t.printEvents(day='',label='',include='',exclude='')
+    #t.printEvents(recent=0,day='',label='',include='',exclude='')
+    #t.printEvents(recent=0,day='',label='ttt',include='BST',exclude='')
+    #t.printEvents(recent=1,day='',label='f',include='',exclude='')
     #t.printEvents(day='5/10',label='',include='analyzeLog',exclude='')
     #t.printEvents(day='',label='tt',include='analyzeLog',exclude='')
     #t.printEvents(day='5/9',label='t',include='',exclude='')
