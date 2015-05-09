@@ -1,0 +1,147 @@
+# NOTE: Ugly right now, but works. Will refactor later
+
+from datetime import datetime
+
+def addData_toTable(dayData):
+    # Display tabulation!
+    dct = {}
+
+    # Fill with placeholders
+    for ch in ['t','b','f']:
+        for i in (1,2,3):
+            dct[ch*i] = 0
+    dct['mis'] = 0
+    dct['org'] = 0
+
+    for event in dayData:
+        categ = event[3]
+        duration = event[4]
+        if categ not in dct:
+            dct[categ] = duration
+        else:
+            dct[categ] += duration
+        desc = event[2]
+        if 'orgz' in desc:
+            dct['org'] += duration
+
+    sum = 0
+    for key in dct:
+        if key in table:
+            table[key].append(dct[key])
+        else:
+            table[key] =[dct[key]]
+        if key != 'org':
+            sum += dct[key]
+    table['sum'].append(sum)
+
+def printTable(table):
+    print ','.join(['day'] + table['day'])
+
+    print 'mis,',
+    for i in table['mis']:
+        print "{:4.1f}".format(i) + ',',
+    print
+    print
+
+    for ch in ['t','b','f']:
+        for i in (1,2,3):
+            categ = ch*i
+            if categ != 'fff':
+                print format(categ,'3') + ',',
+                for i in table[categ]:
+                    print "{:4.1f}".format(i) + ',',
+                print
+        print
+
+    print 'org,',
+    for i in table['org']:
+        print "{:4.1f}".format(i) + ',',
+    print
+
+    print 'sum,',
+    for i in table['sum']:
+        print "{:4.1f}".format(i) + ',',
+    print
+
+
+#### Grab raw data and put into form I want!
+logDir = "C:/Users/Abe/Dropbox/CS/apps/analyzeLog/"
+logFile = "timeLog.txt"
+#logFile = "timeLog_prac.txt"
+f =  open(logDir + logFile,"r")
+curr = 0.0
+events = []
+## Crazy main for-loop
+for line in f:
+    event = []
+    line =line.strip()
+    if line == 'log' or line == '':
+        pass
+    elif line[0] == '$':
+        strMonthYear = line[1:]
+        strMonth =line[1:].split(' ')[0]
+        if strMonth == 'May':
+            strMonth = '5'
+        elif strMonth == 'June':
+            strMonth = '6'
+    elif line[0] == '#':
+        # Grab just the number of the day (ie. '5' instead of 'Tues')
+        strDay = line[1:].split(' ')[1]
+    else:
+        # Split events into 3 parts => time, desc, categ
+        # Use '_' as the delimiter. Change first space to '_'
+        event.append('%05s'%'/'.join([strMonth,strDay]))
+        event += line.replace(' ','_',1).split('_',2)
+        if len(event) < 4:
+            event.append('mis')
+
+        # Get duration
+        # Start with hours and mins
+        time = event[1]
+        if len(time) == 2:
+            currMin = time
+        elif len(time) == 3:
+            currHour = time[0]
+            currMin = time[1:]
+        elif len(time) == 4:
+            currHour = time[0:2]
+            currMin = time[2:]
+        past = curr
+        curr = float(currHour) + float(currMin)/60
+        duration = curr - past
+
+        # Deal with times that cross over days
+        if duration < 0:
+            duration += 24
+        event.append(duration)
+
+        events.append(event)
+f.close()
+# Marks end (for making table later)
+events.append(['end'])
+
+#### Take data and tabulate by day & categ
+## Make output table below
+table = {}
+table['day'] = []
+table['sum'] = []
+curr = ''
+dayData =[]
+#TODO: Could shorten this using a range, or a while loop?
+for ls in events:
+    past = curr
+    curr = ls[0]
+    if curr!=past:
+        if len(dayData) > 0:
+            table['day'].append(past)
+            addData_toTable(dayData)
+            dayData =[]
+    else:
+        dayData.append(ls)
+
+printTable(table)
+
+
+# TODO:
+# Refactor, turn this whole thing into a class, to access 'table'
+# Could use fancier datetime functions, just for practice
