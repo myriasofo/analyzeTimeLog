@@ -1,12 +1,25 @@
 # NOTE: Ugly right now, but works. Will refactor later
+# TODO:
+    # Refactor, turn this whole thing into a class (no more globals)
+    # Could use fancier datetime functions, just for practice
+        #from datetime import datetime
+        # ESP. for "June" to "5"
 
-from datetime import datetime
+# Formatting Rules for log
+    # Check 'timeLog_example.txt' for a concrete example
+    # must start with 'month year', eg. 'May 2015'
+    # each day must start with 'day number', eg. 'Tues 5'
+    # first event for each day must be when woke up
+    # For each event: 'time desc_categ', eg. '940 wakeup_fff'
+    # Note that '940' is '9:40am' and it's the END time
+    # Special abbrev: after '940' a '50' means '9:50am'
+    # Also use military time, so '2140' means '9:40pm'
+    # That's it!
+
 
 def addData_toTable(dayData):
-    # Display tabulation!
+    # Use a dict, fill with placeholders for table later
     dct = {}
-
-    # Fill with placeholders
     for ch in ['t','b','f']:
         for i in (1,2,3):
             dct[ch*i] = 0
@@ -35,14 +48,11 @@ def addData_toTable(dayData):
     table['sum'].append(sum)
 
 def printTable(table):
+    # Print day
     print ','.join(['day'] + table['day'])
+    print 
 
-    print 'mis,',
-    for i in table['mis']:
-        print "{:4.1f}".format(i) + ',',
-    print
-    print
-
+    # Print each categ
     for ch in ['t','b','f']:
         for i in (1,2,3):
             categ = ch*i
@@ -53,21 +63,18 @@ def printTable(table):
                 print
         print
 
-    print 'org,',
-    for i in table['org']:
-        print "{:4.1f}".format(i) + ',',
-    print
-
-    print 'sum,',
-    for i in table['sum']:
-        print "{:4.1f}".format(i) + ',',
-    print
+    # Print extra categ
+    for label in ['org','sum','mis']:
+        print label + ',',
+        for i in table[label]:
+            print "{:4.1f}".format(i) + ',',
+        print
 
 
 #### Grab raw data and put into form I want!
 logDir = "C:/Users/Abe/Dropbox/CS/apps/analyzeLog/"
 logFile = "timeLog.txt"
-#logFile = "timeLog_prac.txt"
+#logFile = "timeLog_example.txt"
 f =  open(logDir + logFile,"r")
 curr = 0.0
 events = []
@@ -78,14 +85,15 @@ for line in f:
     if line == 'log' or line == '':
         pass
     elif line[0] == '$':
-        strMonthYear = line[1:]
+        #strMonthYear = line[1:]
         strMonth =line[1:].split(' ')[0]
+        #TODO: do this automatically, yo
         if strMonth == 'May':
             strMonth = '5'
         elif strMonth == 'June':
             strMonth = '6'
     elif line[0] == '#':
-        # Grab just the number of the day (ie. '5' instead of 'Tues')
+        # Grab just number of the day (ie. '5' instead of 'Tues')
         strDay = line[1:].split(' ')[1]
     else:
         # Split events into 3 parts => time, desc, categ
@@ -128,6 +136,8 @@ table['sum'] = []
 curr = ''
 dayData =[]
 #TODO: Could shorten this using a range, or a while loop?
+    # Like maybe take out need for 'end' above
+    # Maybe a dumb idea
 for ls in events:
     past = curr
     curr = ls[0]
@@ -141,7 +151,3 @@ for ls in events:
 
 printTable(table)
 
-
-# TODO:
-# Refactor, turn this whole thing into a class, to access 'table'
-# Could use fancier datetime functions, just for practice
