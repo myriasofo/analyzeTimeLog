@@ -1,7 +1,7 @@
 # WHAT: Analyze how I spent my time
     # Two main functions:
     # 1. Print table of hrs spent - by day, by categ
-    # 2. Print selected events - chosen by day/catg/keyword
+    # 2. Print selected events - chosen by day/categ/keyword
 
 # HOW: Takes in log, processes it, then prints tables
     # Below is info on the formatting of the time log
@@ -31,14 +31,6 @@
         # Spend 5hr on great tasks (over lesser tasks)
         # Minimize time socializing
 
-# TODO:
-    # Need a bit more cleaning up - esp. 'crazy main loop'
-        # getDuration as its own fctn
-        # find way to convert 'June' to '6'
-    # Could use fancier datetime functions, just for practice
-        #from datetime import datetime
-        # ESP. for "June" to "5"
-
 from datetime import datetime
 
 class TimeTracker:
@@ -48,53 +40,78 @@ class TimeTracker:
 
 
     def extractData(self,logLocation):
+        ''' 
+        1. Take in log, sep bw month/day/event
+        2. If event, append to 'events' (with month/day, desc, categ, duration)
+        '''
+
+        # Instantiate vars for getDuration()
         hr = 0.0
         clock = 0.0
 
-        ## Crazy main for-loop
+        # Crazy main for-loop
         f =  open(logLocation,"r")
         for line in f:
-            event = []
             line =line.strip()
             if line == 'log' or line == '':
                 pass
 
+            # Line is month/year info
             elif line[0] == '$':
                 month = str(datetime.strptime(line,'$%b %Y').month)
 
+            # Line is day info
             elif line[0] == '#':
                 day = line[1:]
 
+            # If line not month or day, means event
             else:
-                event.append(month + '/' + day)
+                # Get month/day from prev lines
+                date = month + '/' + day
 
-                # For events, use '_' as the delimiter. Change first space to '_'
-                # Split events into 3 parts => time, desc, categ
-                event += line.replace(' ','_',1).split('_',2)
-                if len(event) < 4:
-                    event.append('mis')
+                # Event has 3 parts: timer, desc, categ
+                # Use '_' as the delimiter.
+                # Note: Manually change first space to delimiter
+                line = line.replace(' ','_',1)
+                line = line.split('_')
 
-                duration, hr, clock = self.getDuration(event[1],hr,clock)
-                event.append(duration)
+                # If categ is missing, add 'mis' 
+                if len(line) < 3:
+                    line.append('mis')
 
-                self.events.append(event)
+                # Grab each part
+                timer = line[0]
+                desc = line[1]
+                categ = line[2]
+
+                # Get duration. Tricky encapsulation bc relies on prev time
+                duration, hr, clock = self.getDuration(timer, hr, clock)
+
+                # Finally, append line to events
+                self.events.append([date,duration,categ,desc])
         f.close()
         # Marks end (for makeTable later)
-        self.events.append(['end','na','na','na',0])
+        self.events.append(['end',0,'na','na'])
 
-    def getDuration(self, logged, prevHr, prevClock):
+    def getDuration(self, timer, prevHr, prevClock):
+        ''' 
+        'timer' is first # of each event. It's an abbrev:
+            so '930' is '9:30am'
+            and '2130' is '9:30pm'
+            also '50' after '930' means '9:50am'
+        For '50', need hr from prev line
+        '''
+
         # Identify hr and mins:
-        # eg. '930' is '9:30am' and '2130' is '9:30pm'
-        # while '50' after '930' means '9:50am'
-        if len(logged) == 2:
+        if len(timer) == 2:
             hr = prevHr
-            mins = logged
-        elif len(logged) == 3:
-            hr = logged[0]
-            mins = logged[1:]
-        elif len(logged) == 4:
-            hr = logged[0:2]
-            mins = logged[2:]
+            mins = timer
+        elif len(timer) == 3:
+            hr = timer[0]
+            mins = timer[1:]
+        elif len(timer) == 4:
+            hr = timer[0:2]
+            mins = timer[2:]
 
         clock = float(hr) + float(mins)/60
         duration = clock - prevClock
@@ -107,59 +124,61 @@ class TimeTracker:
 
 
     def makeTable(self):
-        #### Take data and tabulate by day & categ
-        ## Make output table below
+        '''
+        1. Takes self.events, gathers all lines for a day
+        2. Run stats on that day
+        3. Appends those stats to self.table
+        '''
 
-        self.table['day'] = []
         curr = ''
-        daysData =[]
+        dayData =[]
         for line in self.events:
             past = curr
             curr = line[0]
             if curr == past:
-                daysData.append(line)
-            elif daysData:
-                self.table['day'].append(past)
-                self.forTable_addData(daysData)
-                daysData =[]
+                dayData.append(line)
+            elif dayData:
+                # Now add to table
+                dayStats = self.forDay_getStats(dayData)
+                for key in dayStats:
+                    if key in self.table:
+                        self.table[key].append(dayStats[key])
+                    else:
+                        self.table[key] = [dayStats[key]]
+                dayData = []
 
-    def forTable_addData(self,daysData):
-        ''' Grab stats for each day, then add to table '''
+    def forDay_getStats(self,dayData):
+        ''' Simply: Sum hrs for each categ '''
 
         # Fill with placeholder categs (in case, to fill out table)
-        dct = {}
+        dayStats = {}
         for ch in ['t','b','f']:
             for i in (1,2,3):
-                dct[ch*i] = 0
-        dct['mis'] = 0
-        dct['org'] = 0
-        dct['sum'] = 0
+                dayStats[ch*i] = 0
+        dayStats['day'] = dayData[0][0]
+        dayStats['mis'] = 0
+        dayStats['org'] = 0
+        dayStats['tot'] = 0
 
         # Stats: Time spent in each categ
-        # That is, for each event, add its dur to its categ
-        # Note: Each event has only one categ => mutually exclusive
-        for event in daysData:
-            desc = event[2]
-            categ = event[3]
-            duration = event[4]
+        for event in dayData:
+            duration = event[1]
+            categ = event[2]
+            desc = event[3]
 
-            dct[categ] += duration
-            dct['sum'] += duration
+            dayStats[categ] += duration
+            dayStats['tot'] += duration
 
             # Special categ if event matches substr 'orgz'
-            # So *not* mutually excl with above
             if 'orgz' in desc:
-                dct['org'] += duration
+                dayStats['org'] += duration
 
-        # Now add to table
-        for key in dct:
-            if key in self.table:
-                self.table[key].append(dct[key])
-            else:
-                self.table[key] = [dct[key]]
+        return dayStats
 
 
     def printTable(self):
+        ''' Simply: Print data in table (nicely) '''
+
         # Print month/day
         print 'day',
         for i in self.table['day']:
@@ -179,7 +198,7 @@ class TimeTracker:
             print
 
         # Print extra categs
-        for categ in ['org','sum','mis']:
+        for categ in ['org','tot','mis']:
             print categ,
             for i in self.table[categ]:
                 print "{:5.1f}".format(i),
@@ -187,35 +206,41 @@ class TimeTracker:
 
         print
 
-    def printEvents(self, categ='',day='',include='',exclude=''):
-        # Note: Dislike name 'day0' but best bad
-        viewSum = 0
+    def printEvents(self, day='', label='', include='', exclude=''):
+        '''
+        Prints lines in self.events
+        Here are some options:
+            'day' is month/day (same format as 'date')
+            'label' is category (same format as 'categ')
+            'include' and 'exclude' are any str to match
+        '''
+        total = 0
         for event in self.events:
-            day0 = event[0]
-            desc0 = event[2]
-            categ0 = event[3]
-            dur0 = event[4]
+            date = event[0]
+            dur = event[1]
+            categ = event[2]
+            desc = event[3]
 
             # Enact options below
-            if 'end' == day0:
+            if 'end' == date:
                 continue
-            elif day and day != day0:
+            elif day and day != date:
                 continue
-            elif categ and categ != categ0:
+            elif label and label != categ:
                 continue
-            elif include and include not in desc0:
+            elif include and include not in desc:
                 continue
-            elif exclude and exclude in desc0:
+            elif exclude and exclude in desc:
                 continue
 
             # Print day, dur, categ, desc
-            print "{:>5}".format(day0),
-            print "{:4.1f}".format(dur0),
-            print "{:3}".format(categ0),
-            print desc0
-            viewSum += dur0
+            print "{:>5}".format(date),
+            print "{:4.1f}".format(dur),
+            print "{:3}".format(categ),
+            print desc
+            total += dur
 
-        print "SUM:","{:4.1f}".format(viewSum)
+        print "TOTAL:","{:3.1f}".format(total)
 
 def main():
     logDir = "C:/Users/Abe/Dropbox/CS/apps/analyzeLog/"
@@ -225,9 +250,12 @@ def main():
     t.makeTable()
     t.printTable()
 
-    t.printEvents()
-    #t.printEvents(day='5/9',categ='tt')
-    #t.printEvents(day='5/9',categ='tt',exclude='analyzeLog')
+    #t.printEvents()
+    #t.printEvents(day='',label='',include='',exclude='')
+    t.printEvents(day='5/9',label='t',include='',exclude='')
+
+    #t.printEvents(day='5/9',label='tt')
+    #t.printEvents(day='5/9',label='tt',exclude='analyzeLog')
     #t.printEvents(include='orgz')
 
 main()
