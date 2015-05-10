@@ -182,3 +182,27 @@ for line in events:
 
 printTable(table)
 
+def printEvents(events,categ='',day='',include='',exclude=''):
+    viewSum = 0
+    for line in events:
+        if line[0]=='end':
+            continue
+        elif day!='' and line[0] != day:
+            continue
+        elif categ!='' and line[3] != categ:
+            continue
+        elif include!='' and include not in line[2]:
+            continue
+        elif exclude!='' and exclude in line[2]:
+            continue
+        print line[0],
+        print line[3],
+        print "{:4.1f}".format(line[4]),
+        print line[2]
+        viewSum += line[4]
+    print "sum:","{:4.1f}".format(viewSum)
+
+printEvents(events,categ='tt')
+#printEvents(events,categ='tt',exclude='analyzeLog')
+#printEvents(events,include='orgz')
+
