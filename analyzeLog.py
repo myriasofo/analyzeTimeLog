@@ -1,20 +1,45 @@
+# WHAT: Analyze how I spent my time
+    # Two main functions:
+    # 1. Print table of hrs spent - by day, by categ
+    # 2. Print selected events - chosen by day/catg/keyword
+
+# HOW: Takes in log, processes, then prints tables
+    # Below is info on the formatting of the time log
+    # Check 'timeLog_example.txt' for a concrete example
+    # 1. Must start with 'month year', eg. 'May 2015'
+    # 2. Must proceed with 'day number', eg. 'Tues 5'
+    # 3. First event for each day must be when woke up
+    # 4. For each event: 'time desc_categ', eg. '940 wakeup_fff'
+        # Note that '940' is '9:40am' and it's the END time
+        # Special abbrev: after '940' a '50' means '9:50am'
+        # Also use military time, so '2140' means '9:40pm'
+    # That's it!
+
+# WHY: To work more on high priority tasks
+    # To see how I spend my time, just like how I spend money
+    # Each use of time is like a 'purchase'
+    # Just tracking makes me aware of how I spend
+    # 1. What events are fixed (eg. sleep) vs discretionary (eg. fb)?
+        # Breaks are impt to avoid burnout - so they're inbetween
+    # 2. How much value am I getting from each event?
+        # What events are great and I should do more of?
+        # What events are worthless and I should avoid?
+    # 3. How long did I think it'd take? How long did it actually take?
+    # 4. How much do I plan on working? How much do I actually work?
+    # Overall.
+        # Spend 1hr on exercising and meditation
+        # Spend 1hr on breaks
+        # Spend 5hr on tasks
+        # Minimize time socializing
+        # Do more higher priority tasks over low
+
+
 # NOTE: Ugly right now, but works. Will refactor later
 # TODO:
     # Refactor, turn this whole thing into a class (no more globals)
     # Could use fancier datetime functions, just for practice
         #from datetime import datetime
         # ESP. for "June" to "5"
-
-# Formatting Rules for log
-    # Check 'timeLog_example.txt' for a concrete example
-    # must start with 'month year', eg. 'May 2015'
-    # each day must start with 'day number', eg. 'Tues 5'
-    # first event for each day must be when woke up
-    # For each event: 'time desc_categ', eg. '940 wakeup_fff'
-    # Note that '940' is '9:40am' and it's the END time
-    # Special abbrev: after '940' a '50' means '9:50am'
-    # Also use military time, so '2140' means '9:40pm'
-    # That's it!
 
 
 def addData_toTable(dayData):
@@ -37,20 +62,23 @@ def addData_toTable(dayData):
         if 'orgz' in desc:
             dct['org'] += duration
 
-    sum = 0
+    daySum = 0
     for key in dct:
         if key in table:
             table[key].append(dct[key])
         else:
             table[key] =[dct[key]]
         if key != 'org':
-            sum += dct[key]
-    table['sum'].append(sum)
+            daySum += dct[key]
+    table['sum'].append(daySum)
 
 def printTable(table):
     # Print day
-    print ','.join(['day'] + table['day'])
-    print 
+    print 'day,',
+    for i in table['day']:
+        print '%04s'%i + ',',
+    print
+    print
 
     # Print each categ
     for ch in ['t','b','f']:
@@ -70,10 +98,13 @@ def printTable(table):
             print "{:4.1f}".format(i) + ',',
         print
 
+    print
+
 
 #### Grab raw data and put into form I want!
 logDir = "C:/Users/Abe/Dropbox/CS/apps/analyzeLog/"
-logFile = "timeLog.txt"
+#logFile = "timeLog.txt"
+logFile = "timeLog_quick.txt"
 #logFile = "timeLog_example.txt"
 f =  open(logDir + logFile,"r")
 curr = 0.0
@@ -98,7 +129,7 @@ for line in f:
     else:
         # Split events into 3 parts => time, desc, categ
         # Use '_' as the delimiter. Change first space to '_'
-        event.append('%05s'%'/'.join([strMonth,strDay]))
+        event.append('/'.join([strMonth,strDay]))
         event += line.replace(' ','_',1).split('_',2)
         if len(event) < 4:
             event.append('mis')
@@ -126,7 +157,7 @@ for line in f:
         events.append(event)
 f.close()
 # Marks end (for making table later)
-events.append(['end'])
+events.append(['end','','','',''])
 
 #### Take data and tabulate by day & categ
 ## Make output table below
@@ -138,16 +169,16 @@ dayData =[]
 #TODO: Could shorten this using a range, or a while loop?
     # Like maybe take out need for 'end' above
     # Maybe a dumb idea
-for ls in events:
+for line in events:
     past = curr
-    curr = ls[0]
-    if curr!=past:
+    curr = line[0]
+    if curr != past:
         if len(dayData) > 0:
             table['day'].append(past)
             addData_toTable(dayData)
             dayData =[]
     else:
-        dayData.append(ls)
+        dayData.append(line)
 
 printTable(table)
 
