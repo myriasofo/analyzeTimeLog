@@ -48,6 +48,9 @@ class TimeTracker:
         # Instantiate vars for getDuration()
         hr = 0.0
         clock = 0.0
+        # Instantiate vars in case missing day/month
+        day ='0'
+        month ='0'
 
         # Crazy main for-loop
         f =  open(logLocation,"r")
@@ -158,6 +161,9 @@ class TimeTracker:
         dayStats['day'] = dayData[0][0]
         dayStats['mis'] = 0
         dayStats['org'] = 0
+        dayStats['brk'] = 0
+        dayStats['tsk'] = 0
+        dayStats['fxd'] = 0
         dayStats['tot'] = 0
 
         # Stats: Time spent in each categ
@@ -173,38 +179,43 @@ class TimeTracker:
             if 'orgz' in desc:
                 dayStats['org'] += duration
 
+            # Not just hours, but also freq
+            if categ[0] == 'b':
+                dayStats['brk'] += 1
+            elif categ[0] == 'f':
+                dayStats['fxd'] += 1
+            elif categ[0] == 't':
+                dayStats['tsk'] += 1
+
         return dayStats
 
+
+    def printRow(self, categList, formatting, newline=1):
+        ''' Print one row of table '''
+        for categ in categList:
+            print '{:3}'.format(categ),
+            for i in self.table[categ]:
+                print formatting.format(i),
+            print
+        if newline:
+            print
 
     def printTable(self):
         ''' Simply: Print data in table (nicely) '''
 
         # Print month/day
-        print 'day',
-        for i in self.table['day']:
-            print "{:>5}".format(i),
-        print
-        print
+        self.printRow(['day'], '{:>5}')
 
         # Print each categ
-        for ch in ['t','b','f']:
-            for i in (1,2,3):
-                categ = ch*i
-                if categ != 'fff':
-                    print format(categ,'3'),
-                    for i in self.table[categ]:
-                        print "{:5.1f}".format(i),
-                    print
-            print
+        self.printRow(['t','tt','ttt'], '{:5.1f}')
+        self.printRow(['b','bb','bbb'], '{:5.1f}')
+        self.printRow(['f','ff'], '{:5.1f}')
 
         # Print extra categs
-        for categ in ['org','tot','mis']:
-            print categ,
-            for i in self.table[categ]:
-                print "{:5.1f}".format(i),
-            print
-
-        print
+        self.printRow(['org','tot','mis'],'{:5.1f}')
+        self.printRow(['tsk'],'{:5}',newline=0)
+        self.printRow(['brk'],'{:5}',newline=0)
+        self.printRow(['fxd'],'{:5}')
 
     def printEvents(self, day='', label='', include='', exclude=''):
         '''
@@ -248,11 +259,12 @@ def main():
     t = TimeTracker()
     t.extractData(logDir + logFile)
     t.makeTable()
+
     t.printTable()
 
     #t.printEvents()
     #t.printEvents(day='',label='',include='',exclude='')
-    t.printEvents(day='5/9',label='t',include='',exclude='')
+    #t.printEvents(day='5/9',label='t',include='',exclude='')
 
     #t.printEvents(day='5/9',label='tt')
     #t.printEvents(day='5/9',label='tt',exclude='analyzeLog')
