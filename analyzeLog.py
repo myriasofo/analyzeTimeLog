@@ -1,37 +1,41 @@
-# WHAT: Analyze how I spent my time
-    # Two main functions:
-    # 1. Print table of hrs spent - by day, by categ
-    # 2. Print selected events - chosen by day/categ/keyword
+'''
+WHAT: Analyze how I spend my time
+    Two main uses:
+    1. Print table of hrs spent on each category, each day
+    2. Print selected events (can choose by day/categ/keyword)
 
-# HOW: Takes in log, processes it, then prints tables
-    # Below is info on the formatting of the time log
-    # Check 'timeLog_example.txt' for a concrete example
-    # 1. Must start with 'month year', eg. 'May 2015'
-    # 2. Must proceed with 'day number', eg. 'Tues 5'
-    # 3. First event for each day must be when woke up
-    # 4. For each event: 'time desc_categ', eg. '940 wakeup_fff'
-        # Note that '940' is '9:40am' and it's the END time
-        # Special abbrev: after '940' a '50' means '9:50am'
-        # Also use military time, so '2140' means '9:40pm'
+HOW: Takes in log, processes it, then prints tables
+    The log is plain-text, but in a special style (for ease of entry)
+    Check 'timeLog_example.txt' for a concrete example
+    1. First line should be 'log'
+    2. Next line should be '$month year', eg. '$May 2015'
+    3. Then '#dayNumber', eg. '#5'
+    4. First event for each day must be waking up (makes sense)
+    5. For each event: 'time desc_categ', eg. '940 wakeup_fff'
+        Note that '940' is '9:40am' and it's the end time
+        Special abbrev: after '940', a '50' means '9:50am'
+        Also use military time, so '2140' means '9:40pm'
 
-# WHY: To work more on high priority tasks
-    # To see how I spend my time, just like how I spend money
-    # Each use of time is like a 'purchase'
-    # Just tracking makes me aware of how I spend
-    # 1. What events are fixed (eg. sleep) vs discretionary (eg. fb)?
-        # Breaks are impt to avoid burnout - so they're inbetween
-    # 2. How much value am I getting from each event?
-        # What events are great and I should do more of?
-        # What events are worthless and I should avoid?
-    # 3. How long did I think it'd take? How long did it actually take?
-    # 4. How much do I plan on working? How much do I actually work?
-    # Overall.
-        # Spend 1hr on exercising and meditation
-        # Spend 1hr on breaks
-        # Spend 5hr on great tasks (over lesser tasks)
-        # Minimize time socializing
+WHY: To work more on high priority tasks
+    To see how I spend my time, just like how I spend money
+    Each use of time is like a 'purchase'
+    Just tracking makes me aware of how I spend
+    1. What events are fixed (eg. sleep) vs discretionary (eg. fb)?
+        Breaks are impt to avoid burnout - so they're inbetween
+    2. How much value am I getting from each event?
+        What events are great and I should do more of?
+        What events are worthless and I should avoid?
+    3. How long did I think it'd take? How long did it actually take?
+    4. How much do I plan on working? How much do I actually work?
+    Overall.
+        Spend 1hr on exercising and meditation
+        Spend 1hr on breaks
+        Spend 5hr on great tasks (over lesser tasks)
+        Control time socializing
+'''
 
 from datetime import datetime
+from math import floor
 
 class TimeTracker:
     def __init__(self):
@@ -41,189 +45,181 @@ class TimeTracker:
 
     def extractData(self,logLocation):
         ''' 
+        This fctn takes in log and returns desired parts
         1. Take in log, sep bw month/day/event
-        2. If event, append to 'events' (with month/day, desc, categ, duration)
+        2. If event, add line to self.events with 4 parts:
+            date (ie. month/day)
+            duration of event
+            category
+            text description
         '''
 
-        # Instantiate vars for getDuration()
-        hr = 0.0
-        clock = 0.0
-        # Instantiate vars in case missing day/month
-        day ='0'
-        month ='0'
+        # Instantiate vars in case missing month/day
+        month =''
+        day =''
+        self.nDays = 1
 
         # Crazy main for-loop
-        f =  open(logLocation,"r")
+        f = open(logLocation,"r")
         for line in f:
             line =line.strip()
-            if line == 'log' or line == '':
+            if line == '':
                 pass
+            elif line == 'log':
+                # Should start at 0, but prev set to 1 if missing header
+                self.nDays = 0
 
-            # Line is month/year info
+            # Line begin w '$' means month/year info
             elif line[0] == '$':
                 month = str(datetime.strptime(line,'$%b %Y').month)
 
-            # Line is day info
+            # Line begin w '#' means day info
             elif line[0] == '#':
                 day = line[1:]
+                self.nDays += 1
 
-            # If line not month or day, means event
+            # If not date info, then event
             else:
                 # Get month/day from prev lines
                 date = month + '/' + day
 
-                # Event has 3 parts: timer, desc, categ
+                # Event has 3 parts: loggedTime, desc, categ
                 # Use '_' as the delimiter.
-                # Note: Manually change first space to delimiter
-                line = line.replace(' ','_',1)
-                line = line.split('_')
 
                 # If categ is missing, add 'mis' 
-                if len(line) < 3:
-                    line.append('mis')
+                if '_' not in line:
+                    line += '_mis'
 
-                # Grab each part
-                timer = line[0]
-                desc = line[1]
-                categ = line[2]
+                # Change first space to delimiter
+                line = line.replace(' ','_',1)
 
-                # Get duration. Tricky encapsulation bc relies on prev time
-                duration, hr, clock = self.getDuration(timer, hr, clock)
+                # Get each part wanted
+                loggedTime, desc, categ = line.split('_')
+                dur = self.getDuration(loggedTime)
 
                 # Finally, append line to events
-                self.events.append([date,duration,categ,desc])
+                self.events.append([date,dur,categ,desc])
         f.close()
-        # Marks end (for makeTable later)
-        self.events.append(['end',0,'na','na'])
 
-    def getDuration(self, timer, prevHr, prevClock):
+    def getDuration(self, loggedTime):
         ''' 
-        'timer' is first # of each event. It's an abbrev:
+        This is a helper fctn for extractData()
+        It takes a time entry (ie. loggedTime) and returns length of event
+        'loggedTime' is in military time:
             so '930' is '9:30am'
             and '2130' is '9:30pm'
-            also '50' after '930' means '9:50am'
-        For '50', need hr from prev line
+        Some entries are abbrev to 2 numbers - so use hr from prev line
+            a '45' after '930' means '945am'
+        To get duration, I subtract curr from prev
+        Each is in the format of 'clock', ie. hrs from midnight
+            so '930' is 9.5
+            and '2130' is 21.5
         '''
 
         # Identify hr and mins:
-        if len(timer) == 2:
-            hr = prevHr
-            mins = timer
-        elif len(timer) == 3:
-            hr = timer[0]
-            mins = timer[1:]
-        elif len(timer) == 4:
-            hr = timer[0:2]
-            mins = timer[2:]
+        logChars =len(loggedTime)
+        if logChars == 4:
+            hr = loggedTime[0:2]
+            mins = loggedTime[2:]
+        elif logChars == 3:
+            hr = loggedTime[0]
+            mins = loggedTime[1:]
+        elif logChars == 2:
+            hr = floor(self.clock)
+            mins = loggedTime
 
-        clock = float(hr) + float(mins)/60
-        duration = clock - prevClock
+        # Note: 'clock' is hours since midnight
+        if not hasattr(self,'clock'):
+            self.clock = 0.0
+        prev = self.clock
+        self.clock = float(hr) + float(mins)/60
+        dur = self.clock - prev
 
         # For event that goes past midnight (eg. 2359 to 000)
-        if duration < 0:
-            duration += 24
+        if dur < 0:
+            dur += 24
 
-        return (duration, hr, clock)
-
+        return dur
 
     def makeTable(self):
         '''
-        1. Takes self.events, gathers all lines for a day
-        2. Run stats on that day
-        3. Appends those stats to self.table
+        This fctn takes in self.events and returns table of stats
+        1. Make table of placeholders
+        2. For each event, add dur to approp cell
+        3. Determine cell by categ (row) and day (column)
+        NOTE: categ is row bc need same number format for print later
         '''
 
-        curr = ''
-        dayData =[]
-        for line in self.events:
-            past = curr
-            curr = line[0]
-            if curr == past:
-                dayData.append(line)
-            elif dayData:
-                # Now add to table
-                dayStats = self.forDay_getStats(dayData)
-                for key in dayStats:
-                    if key in self.table:
-                        self.table[key].append(dayStats[key])
-                    else:
-                        self.table[key] = [dayStats[key]]
-                dayData = []
-
-    def forDay_getStats(self,dayData):
-        ''' Simply: Sum hrs for each categ '''
-
-        # Fill with placeholder categs (in case, to fill out table)
-        dayStats = {}
+        # Gather up all categs desired
+        categList = []
+        categList += ['day','tot','mis','org']
+        categList += ['tsk','brk','fxd']
         for ch in ['t','b','f']:
             for i in (1,2,3):
-                dayStats[ch*i] = 0
-        dayStats['day'] = dayData[0][0]
-        dayStats['mis'] = 0
-        dayStats['org'] = 0
-        dayStats['brk'] = 0
-        dayStats['tsk'] = 0
-        dayStats['fxd'] = 0
-        dayStats['tot'] = 0
+                categList.append(ch*i)
 
-        # Stats: Time spent in each categ
-        for event in dayData:
-            duration = event[1]
-            categ = event[2]
-            desc = event[3]
-
-            dayStats[categ] += duration
-            dayStats['tot'] += duration
-
-            # Special categ if event matches substr 'orgz'
-            if 'orgz' in desc:
-                dayStats['org'] += duration
-
-            # Not just hours, but also freq
-            if categ[0] == 'b':
-                dayStats['brk'] += 1
-            elif categ[0] == 'f':
-                dayStats['fxd'] += 1
-            elif categ[0] == 't':
-                dayStats['tsk'] += 1
-
-        return dayStats
-
-
-    def printRow(self, categList, formatting, newline=1):
-        ''' Print one row of table '''
+        # Fill table with placeholder zeros for each categ
         for categ in categList:
-            print '{:3}'.format(categ),
-            for i in self.table[categ]:
-                print formatting.format(i),
-            print
-        if newline:
-            print
+            self.table[categ] = [0]*self.nDays
+
+        # For each event, add its dur to approp cell
+        col = -1
+        date = ''
+        for line in self.events:
+            prev = date
+            date = line[0]
+            dur = line[1]
+            categ = line[2]
+            desc = line[3]
+
+            # For first event of each day
+            # Note: first should always be wakeup, so don't count
+            if date != prev:
+                col += 1
+                self.table['day'][col] = date
+
+            # Now get stats!
+            else:
+                self.table[categ][col] += dur
+                self.table['tot'][col] += dur
+
+                # Special categs
+                if 'orgz' in desc:
+                    self.table['org'][col] += dur
+
+                # Not just hours, but also freq
+                for i,j in [('t','tsk'),('b','brk'),('f','fxd')]:
+                    if categ[0] == i:
+                        self.table[j][col] += 1
+
 
     def printTable(self):
-        ''' Simply: Print data in table (nicely) '''
+        ''' Print table of stats (nicely) '''
 
-        # Print month/day
-        self.printRow(['day'], '{:>5}')
+        # Pick out categs to print and their formatting
+        sections = []
+        sections.append((['day'],'{:>5}'))
+        sections.append((['t','tt','ttt'], '{:5.1f}'))
+        sections.append((['b','bb','bbb'], '{:5.1f}'))
+        sections.append((['f','ff'], '{:5.1f}'))
+        sections.append((['org','tot','mis'],'{:5.1f}'))
+        sections.append((['tsk','brk','fxd'],'{:5}'))
 
-        # Print each categ
-        self.printRow(['t','tt','ttt'], '{:5.1f}')
-        self.printRow(['b','bb','bbb'], '{:5.1f}')
-        self.printRow(['f','ff'], '{:5.1f}')
-
-        # Print extra categs
-        self.printRow(['org','tot','mis'],'{:5.1f}')
-        self.printRow(['tsk'],'{:5}',newline=0)
-        self.printRow(['brk'],'{:5}',newline=0)
-        self.printRow(['fxd'],'{:5}')
+        for (categs,fmt) in sections:
+            for categ in categs:
+                print '{:3}'.format(categ),
+                for i in self.table[categ]:
+                    print fmt.format(i),
+                print
+            print
 
     def printEvents(self, day='', label='', include='', exclude=''):
         '''
-        Prints lines in self.events
+        Prints selected lines in self.events
         Here are some options:
             'day' is month/day (same format as 'date')
             'label' is category (same format as 'categ')
-            'include' and 'exclude' are any str to match
+            'include' and 'exclude' are str matches
         '''
         total = 0
         for event in self.events:
@@ -262,13 +258,10 @@ def main():
 
     t.printTable()
 
-    #t.printEvents()
     #t.printEvents(day='',label='',include='',exclude='')
+    #t.printEvents(day='5/10',label='',include='analyzeLog',exclude='')
+    #t.printEvents(day='',label='tt',include='analyzeLog',exclude='')
     #t.printEvents(day='5/9',label='t',include='',exclude='')
-
-    #t.printEvents(day='5/9',label='tt')
-    #t.printEvents(day='5/9',label='tt',exclude='analyzeLog')
-    #t.printEvents(include='orgz')
 
 main()
 
