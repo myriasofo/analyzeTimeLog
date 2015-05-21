@@ -57,19 +57,15 @@ class TimeTracker:
         # Instantiate vars in case missing month/day
         month =''
         day =''
-        self.nDays = 1
+        self.nDays = 0
 
         # Crazy main for-loop
         f = open(logLocation,"r")
         for line in f:
             line =line.strip()
-            if line == '' or line[0] == '|':
+            if line == '' or line[0] == '|' or line == 'log':
                 " Note: a bar '|' indicates a comment to ignore "
                 pass
-
-            elif line == 'log':
-                # Should start at 0, but prev set to 1 if missing header
-                self.nDays = 0
 
             # Line begin w '$' means month/year info
             elif line[0] == '$':
@@ -294,21 +290,12 @@ def main():
     t.extractData(logDir + logFile)
     t.makeTable()
 
-    #t.printTable()
     #t.printTable(recent=0,raw=0,day='',start='',end='')
     t.printTable(recent=1,raw=1)
     #t.printTable(recent=1)
-    #t.printTable(day='5/9')
-    #t.printTable(start='5/8',end='5/11')
-    #t.printTable(start='5/8')
-    #t.printTable(end='5/8')
 
     #t.printEvents(recent=0,day='',label='',include='',exclude='')
-    #t.printEvents(recent=0,day='',label='ttt',include='BST',exclude='')
-    #t.printEvents(recent=1,day='',label='f',include='',exclude='')
-    #t.printEvents(day='5/10',label='',include='analyzeLog',exclude='')
-    #t.printEvents(day='',label='tt',include='analyzeLog',exclude='')
-    #t.printEvents(day='5/9',label='t',include='',exclude='')
+    t.printEvents(recent=1,day='',label='bb',include='',exclude='')
 
 main()
 
