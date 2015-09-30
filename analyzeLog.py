@@ -8,7 +8,7 @@ HOW: Takes in log, processes it, then prints tables
     The log is plain-text, but in a special style (for ease of entry)
     Check 'timeLog_example.txt' for a concrete example
     1. First line should be 'log'
-    2. Next line should be '$month year', eg. '$May 2015'
+    2. Next line should be '|month year', eg. '|May 2015'
     3. Then '#dayNumber', eg. '#5'
     4. First event for each day must be waking up (makes sense)
     5. For each event: 'time desc_categ', eg. '940 wakeup_fff'
@@ -63,13 +63,13 @@ class TimeTracker:
         f = open(logLocation,"r")
         for line in f:
             line =line.strip()
-            if line == '' or line[0] == '|' or line == 'log':
-                " Note: a bar '|' indicates a comment to ignore "
+            if line == '' or line[0] == '=' or line == 'log':
+                " Note: an equal '=' indicates a comment to ignore "
                 pass
 
-            # Line begin w '$' means month/year info
-            elif line[0] == '$':
-                month = str(datetime.strptime(line,'$%b %Y').month)
+            # Line begin w '|' means month/year info
+            elif line[0] == '|':
+                month = str(datetime.strptime(line,'|%b %Y').month)
 
             # Line begin w '#' means day info
             elif line[0] == '#':
@@ -208,16 +208,16 @@ class TimeTracker:
         sections.append((['t','tt','ttt'], '{:5.1f}'))
         sections.append((['b','bb','bbb'], '{:5.1f}'))
         sections.append((['f','ff'], '{:5.1f}'))
-        sections.append((['org','tot','mis'],'{:5.1f}'))
-        sections.append(([],''))
         sections.append((['tsk','brk','fxd'],'{:5}'))
+        sections.append((['org','tot','mis'],'{:5.1f}'))
+        #sections.append(([],''))
 
 
         # Set default days to print
         iStart = 0
         iEnd = self.nDays - 1
 
-        # Find arr pos of each date
+        # Option 'day', 'start', 'end' - Find arr pos of dates that match
         for i in range(self.nDays):
             if day == self.table['day'][i]:
                 iStart = i
@@ -290,12 +290,19 @@ def main():
     t.extractData(logDir + logFile)
     t.makeTable()
 
-    #t.printTable(recent=0,raw=0,day='',start='',end='')
-    t.printTable(recent=1,raw=1)
-    #t.printTable(recent=1)
+    #t.printTable(recent=1,raw=1)
+    t.printTable(recent=0,raw=0,day='',start='',end='')
+    #t.printTable(recent=0,raw=1,day='7/8',start='',end='')
 
-    #t.printEvents(recent=0,day='',label='',include='',exclude='')
-    t.printEvents(recent=1,day='',label='bb',include='',exclude='')
+    t.printEvents(recent=0,day='',label='',include='',exclude='')
+    t.printEvents(recent=0,day='',label='f',include='',exclude='')
+
+    t.printEvents(recent=0,day='',label='b',include='',exclude='')
+    t.printEvents(recent=0,day='',label='bb',include='',exclude='')
+    t.printEvents(recent=0,day='',label='bbb',include='',exclude='')
+
+    t.printEvents(recent=0,day='',label='t',include='',exclude='')
+    t.printEvents(recent=0,day='',label='tt',include='',exclude='')
 
 main()
 
