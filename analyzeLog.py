@@ -56,16 +56,17 @@ class TimeTracker:
         '''
 
         # Instantiate vars in case missing month/day
-        month =''
-        day =''
+        month = ''
+        day = ''
         self.nDays = 0
 
         # Crazy main for-loop
-        f = open(logLocation,"r")
+        f = open(logLocation, "r")
         for line in f:
-            line =line.strip()
+            line = line.strip()
+
+            # Note: an equal '=' indicates a comment to ignore
             if line == '' or line[0] == '=' or line == 'log':
-                " Note: an equal '=' indicates a comment to ignore "
                 pass
 
             # Line begin w '$' means month/year info
@@ -77,7 +78,7 @@ class TimeTracker:
                 day = line[1:]
                 self.nDays += 1
 
-            # If not date info, then event
+            # If not info on date, then info on event
             else:
                 # Get month/day from prev lines
                 date = month + '/' + day
@@ -90,14 +91,14 @@ class TimeTracker:
                     line += '_mis'
 
                 # Change first space to delimiter
-                line = line.replace(' ','_',1)
+                line = line.replace(' ', '_', 1)
 
                 # Get each part wanted
                 loggedTime, desc, categ = line.split('_')
                 dur = self.getDuration(loggedTime)
 
                 # Finally, append line to events
-                self.events.append([date,dur,categ,desc])
+                self.events.append([date, dur, categ, desc])
         f.close()
 
     def getDuration(self, loggedTime):
@@ -116,7 +117,7 @@ class TimeTracker:
         '''
 
         # Identify hr and mins:
-        logChars =len(loggedTime)
+        logChars = len(loggedTime)
         if logChars == 4:
             hr = loggedTime[0:2]
             mins = loggedTime[2:]
@@ -131,7 +132,7 @@ class TimeTracker:
         if not hasattr(self,'clock'):
             self.clock = 0.0
         prev = self.clock
-        self.clock = float(hr) + float(mins)/60
+        self.clock = float(hr) + (float(mins) / 60)
         dur = self.clock - prev
 
         # For event that goes past midnight (eg. 2359 to 000)
@@ -151,15 +152,15 @@ class TimeTracker:
 
         # Gather up all categs desired
         categList = []
-        categList += ['day','tot','mis','org']
-        categList += ['tsk','brk','fxd']
-        for ch in ['t','b','f']:
-            for i in (1,2,3):
-                categList.append(ch*i)
+        categList += ['day', 'tot', 'mis', 'org']
+        categList += ['tsk', 'brk', 'fxd']
+        for ch in ['t', 'b', 'f']:
+            for i in (1, 2, 3):
+                categList.append(ch * i)
 
         # Fill table with placeholder zeros for each categ
         for categ in categList:
-            self.table[categ] = [0]*self.nDays
+            self.table[categ] = [0] * self.nDays
 
         # For each event, add its dur to approp cell
         col = -1
@@ -187,7 +188,7 @@ class TimeTracker:
                     self.table['org'][col] += dur
 
                 # Not just hours, but also freq
-                for i,j in [('t','tsk'),('b','brk'),('f','fxd')]:
+                for i,j in [('t', 'tsk'), ('b', 'brk'), ('f', 'fxd')]:
                     if categ[0] == i:
                         self.table[j][col] += 1
 
@@ -205,12 +206,12 @@ class TimeTracker:
         # Pick out categs and their formatting to print
         sections = []
         if not raw:
-            sections.append((['day'],'{:>5}'))
-        sections.append((['t','tt','ttt'], '{:5.1f}'))
-        sections.append((['b','bb','bbb'], '{:5.1f}'))
-        sections.append((['f','ff'], '{:5.1f}'))
-        sections.append((['tsk','brk','fxd'],'{:5}'))
-        sections.append((['org','tot','mis'],'{:5.1f}'))
+            sections.append((['day'], '{:>6}'))
+        sections.append((['t','tt','ttt'], '{:6.1f}'))
+        sections.append((['b','bb','bbb'], '{:6.1f}'))
+        sections.append((['f','ff'], '{:6.1f}'))
+        sections.append((['tsk','brk','fxd'], '{:6}'))
+        sections.append((['org','tot','mis'], '{:6.1f}'))
         #sections.append(([],''))
 
 
@@ -283,9 +284,10 @@ class TimeTracker:
             line += "{:3}".format(categ) + ' '
             line += desc
             print(line)
+
             total += dur
 
-        print("TOTAL:","{:3.1f}".format(total))
+        print("TOTAL:", "{:3.1f}".format(total))
 
 def main():
     # Setting up
