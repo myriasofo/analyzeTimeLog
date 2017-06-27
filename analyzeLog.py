@@ -75,7 +75,7 @@ class TimeTracker:
 
             # Line begin w '#' means day info
             elif line[0] == '#':
-                day = line[1:]
+                day = str(datetime.strptime(line,'#%a %d').day)
                 self.nDays += 1
 
             # If not info on date, then info on event
