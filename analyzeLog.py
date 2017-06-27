@@ -291,12 +291,14 @@ class TimeTracker:
 
 def main():
     # Setting up
-    logDir = os.path.expanduser('~/Dropbox/CS/apps/analyzeLog/')
-    #logFile = "timeLog.txt"
-    logFile = "timeLog_example.txt"
+    #logDir = os.path.expanduser('~/Dropbox/CS/apps/analyzeLog/')
+    logDir = os.path.expanduser('~/dev/analyzeLog/')
+    logFile = "timeLog.txt"
+    #logFile = "timeLog_example.txt"
+    logPath = logDir + logFile
 
     t = TimeTracker()
-    t.extractData(logDir + logFile)
+    t.extractData(logPath)
     t.makeTable()
 
     # Print out results
