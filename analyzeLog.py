@@ -8,7 +8,7 @@ HOW: Takes in log, processes it, then prints tables
     The log is plain-text, but in a special style (for ease of entry)
     Check 'timeLog_example.txt' for a concrete example
     1. First line should be 'log'
-    2. Next line should be '|month year', eg. '|May 2015'
+    2. Next line should be '$month year', eg. '$May 2015'
     3. Then '#dayNumber', eg. '#5'
     4. First event for each day must be waking up (makes sense)
     5. For each event: 'time desc_categ', eg. '940 wakeup_fff'
@@ -36,6 +36,7 @@ WHY: To work more on high priority tasks
 
 from datetime import datetime
 from math import floor
+import os
 
 class TimeTracker:
     def __init__(self):
@@ -67,9 +68,9 @@ class TimeTracker:
                 " Note: an equal '=' indicates a comment to ignore "
                 pass
 
-            # Line begin w '|' means month/year info
-            elif line[0] == '|':
-                month = str(datetime.strptime(line,'|%b %Y').month)
+            # Line begin w '$' means month/year info
+            elif line[0] == '$':
+                month = str(datetime.strptime(line,'$%b %Y').month)
 
             # Line begin w '#' means day info
             elif line[0] == '#':
@@ -191,7 +192,7 @@ class TimeTracker:
                         self.table[j][col] += 1
 
 
-    def printTable(self, recent=0, raw=0, day='', start='', end=''):
+    def printTable(self, recent=False, raw=False, day='', start='', end=''):
         '''
         Print table of stats (nicely)
         Options:
@@ -236,14 +237,15 @@ class TimeTracker:
         # Final forloop to print all
         for (categs,fmt) in sections:
             for categ in categs:
+                line = ''
                 if not raw:
-                    print '{:3}'.format(categ),
+                    line += '{:3}'.format(categ)
                 for i in range(iStart, iEnd+1):
-                    print fmt.format(self.table[categ][i]),
-                print
-            print
+                    line += fmt.format(self.table[categ][i])
+                print(line)
+            print('')
 
-    def printEvents(self, recent=0, day='', label='', include='', exclude=''):
+    def printEvents(self, recent=False, day='', label='', include='', exclude=''):
         '''
         Prints selected lines in self.events
         Here are some options:
@@ -275,34 +277,38 @@ class TimeTracker:
                 continue
 
             # Print day, dur, categ, desc
-            print "{:>5}".format(date),
-            print "{:4.1f}".format(dur),
-            print "{:3}".format(categ),
-            print desc
+            line = ''
+            line += "{:>5}".format(date) + ' '
+            line += "{:4.1f}".format(dur) + ' '
+            line += "{:3}".format(categ) + ' '
+            line += desc
+            print(line)
             total += dur
 
-        print "TOTAL:","{:3.1f}".format(total)
+        print("TOTAL:","{:3.1f}".format(total))
 
 def main():
-    logDir = "C:/Users/Abe/Dropbox/CS/apps/analyzeLog/"
-    logFile = "timeLog.txt"
+    # Setting up
+    logDir = os.path.expanduser('~/Dropbox/CS/apps/analyzeLog/')
+    #logFile = "timeLog.txt"
+    logFile = "timeLog_example.txt"
+
     t = TimeTracker()
     t.extractData(logDir + logFile)
     t.makeTable()
 
+    # Print out results
+    t.printTable()
     #t.printTable(recent=1,raw=1)
-    t.printTable(recent=0,raw=0,day='',start='',end='')
     #t.printTable(recent=0,raw=1,day='7/8',start='',end='')
 
-    t.printEvents(recent=0,day='',label='',include='',exclude='')
-    t.printEvents(recent=0,day='',label='f',include='',exclude='')
-
-    t.printEvents(recent=0,day='',label='b',include='',exclude='')
-    t.printEvents(recent=0,day='',label='bb',include='',exclude='')
-    t.printEvents(recent=0,day='',label='bbb',include='',exclude='')
-
-    t.printEvents(recent=0,day='',label='t',include='',exclude='')
-    t.printEvents(recent=0,day='',label='tt',include='',exclude='')
+    #t.printEvents()
+    #t.printEvents(label='f')
+    #t.printEvents(label='b')
+    #t.printEvents(label='bb')
+    #t.printEvents(label='bbb')
+    #t.printEvents(label='t')
+    #t.printEvents(label='tt')
 
 main()
 

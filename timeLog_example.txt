@@ -22,7 +22,7 @@ log
             1300 worked on clrs ch6_tt
             2100 event without categ
             030 another_ttt
-    $June 2015
+    $Jun 2015
         #Fri 5
             1000 wakeup_fff
             1200 orgz_tt
