@@ -293,8 +293,8 @@ def main():
     # Setting up
     #logDir = os.path.expanduser('~/Dropbox/CS/apps/analyzeLog/')
     logDir = os.path.expanduser('~/dev/analyzeLog/')
-    logFile = "timeLog.txt"
-    #logFile = "timeLog_example.txt"
+    #logFile = "timeLog.to"
+    logFile = "timeLog_example.to"
     logPath = logDir + logFile
 
     t = TimeTracker()

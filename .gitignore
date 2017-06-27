@@ -57,5 +57,5 @@ docs/_build/
 target/
 
 #### My own
-timeLog.txt
-timeLog_quick.txt
+timeLog.to
+timeLog_quick.to
