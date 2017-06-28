@@ -291,11 +291,8 @@ class TimeTracker:
 
 def main():
     # Setting up
-    #logDir = os.path.expanduser('~/Dropbox/CS/apps/analyzeLog/')
-    logDir = os.path.expanduser('~/dev/analyzeLog/')
-    #logFile = "timeLog.to"
-    logFile = "timeLog_example.to"
-    logPath = logDir + logFile
+    #logPath = os.path.expanduser('~/dev/analyzeLog/timeLog_example')
+    logPath = os.path.expanduser('~/Dropbox/Tasks/_gitignore/timeLog.to')
 
     t = TimeTracker()
     t.extractData(logPath)
