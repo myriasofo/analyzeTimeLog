@@ -57,19 +57,32 @@ class Events:
     def getLatestMonthDay(self):
         return self.month + '/' + self.day
 
-
-    def setCurrentMonth(self, month):
-        self.month = month
-
-    def setCurrentDay(self, day):
-        self.day = day
-
-    def resetCurrentHour(self):
-        self.hours = 0
-
     def incrementDays(self):
         self.nDays += 1
 
+
+    def extractEventFromLog(self, logLocation):
+        with open(logLocation, 'r') as f:
+            for line in f:
+                line = line.strip()
+
+                # Note: an equal '=' indicates a comment to ignore
+                if line == '' or line == 'log' or line[0] == '=' or line[0] == '(':
+                    pass
+
+                # Line begin w '$' means month/year info
+                elif line[0] == '$':
+                    self.month = str(datetime.strptime(line,'$ %b %Y').month)
+
+                # Line begin w '#' means day info
+                elif line[0] == '#':
+                    self.day = str(datetime.strptime(line,'# %a %d').day)
+                    self.incrementDays()
+
+                # If not info on date, then info on event
+                else:
+                    self.addEvent(line)
+        return
 
     def addEvent(self, line):
         # Get month/day from prev lines
@@ -131,38 +144,56 @@ class Events:
 
         return dur
 
+    def printEvents(self, pickDay='', categ='', include='', exclude=''):
+        '''
+        Here are the options:
+            'pickDay' is month/day (same format as 'date')
+            'categ' is category (same format as 'categ')
+            'include' and 'exclude' are str matches
+        '''
+        if pickDay == 'latest':
+            pickDay = self.getLatestMonthDay()
+
+        total = 0
+        for event in self.getEvents():
+            date = event[0]
+            dur = event[1]
+            eventCateg = event[2]
+            desc = event[3]
+
+            # Enact options below
+            if 'end' == date:
+                continue
+            elif pickDay and pickDay != date:
+                continue
+            elif categ and categ != eventCateg:
+                continue
+            elif include and include not in desc:
+                continue
+            elif exclude and exclude in desc:
+                continue
+
+            # Print day, dur, categ, desc
+            line = ''
+            line += "{:>5}".format(date) + ' '
+            line += "{:4.1f}".format(dur) + ' '
+            line += "{:3}".format(eventCateg) + ' '
+            line += desc
+            print(line)
+
+            total += dur
+
+        if total != 0:
+            print("TOTAL: " + "{:3.1f}".format(total))
+            print("")
+
+        return
+
 
 class TimeTracker:
     def __init__(self):
         self.table = {}
         self.events = Events()
-
-
-    def extractEventFromLog(self, logLocation):
-        with open(logLocation, 'r') as f:
-            for line in f:
-                line = line.strip()
-
-                # Note: an equal '=' indicates a comment to ignore
-                if line == '' or line == 'log' or line[0] == '=' or line[0] == '(':
-                    pass
-
-                # Line begin w '$' means month/year info
-                elif line[0] == '$':
-                    month = str(datetime.strptime(line,'$ %b %Y').month)
-                    self.events.setCurrentMonth(month)
-
-                # Line begin w '#' means day info
-                elif line[0] == '#':
-                    day = str(datetime.strptime(line,'# %a %d').day)
-                    self.events.setCurrentDay(day)
-                    self.events.incrementDays()
-                    #self.events.resetCurrentHour()
-
-                # If not info on date, then info on event
-                else:
-                    self.events.addEvent(line)
-        return
 
     def makeTable(self):
         '''
@@ -214,7 +245,6 @@ class TimeTracker:
                 for i,j in [('t', 'tsk'), ('b', 'brk'), ('f', 'fxd')]:
                     if categ[0] == i:
                         self.table[j][col] += 1
-
 
     def printTable(self, recent=False, raw=False, day='', start='', end=''):
         '''
@@ -269,67 +299,27 @@ class TimeTracker:
                 print(line)
             print('')
 
-    def printEvents(self, pickDay='', label='', include='', exclude=''):
-        '''
-        Prints selected lines in self.events
-        Here are some options:
-            'pickDay' is month/day (same format as 'date')
-            'label' is category (same format as 'categ')
-            'include' and 'exclude' are str matches
-        '''
-        if pickDay == 'latest':
-            pickDay = self.events.getLatestMonthDay()
-
-        total = 0
-        for event in self.events.getEvents():
-            date = event[0]
-            dur = event[1]
-            categ = event[2]
-            desc = event[3]
-
-            # Enact options below
-            if 'end' == date:
-                continue
-            elif pickDay and pickDay != date:
-                continue
-            elif label and label != categ:
-                continue
-            elif include and include not in desc:
-                continue
-            elif exclude and exclude in desc:
-                continue
-
-            # Print day, dur, categ, desc
-            line = ''
-            line += "{:>5}".format(date) + ' '
-            line += "{:4.1f}".format(dur) + ' '
-            line += "{:3}".format(categ) + ' '
-            line += desc
-            print(line)
-
-            total += dur
-
-        if total != 0:
-            print("TOTAL: " + "{:3.1f}".format(total))
-            print("")
 
 def main():
     # Setting up
     #logPath = os.path.expanduser('~/dev/analyzeLog/timeLog_example')
     logPath = os.path.expanduser('~/Dropbox/Tasks/_gitignore/timeLog.to')
 
-    t = TimeTracker()
-    t.extractEventFromLog(logPath)
-    t.makeTable()
+    e = Events()
+    e.extractEventFromLog(logPath)
+
+    #t = TimeTracker()
+    #t.extractEventFromLog(logPath)
+    #t.makeTable()
 
     # Print out results
-    t.printTable()
+    #t.printTable()
     #t.printTable(recent=1,raw=1)
     #t.printTable(recent=0,raw=1,pickDay='7/8',start='',end='')
 
-    t.printEvents(pickDay='latest')
-    #t.printEvents(pickDay='6/28')
-    #t.printEvents(pickDay='6/40')
+    e.printEvents(pickDay='latest')
+    e.printEvents(pickDay='6/28')
+    #e.printEvents(pickDay='6/40')
 
     #t.printEvents(label='f')
     #t.printEvents(label='b')
