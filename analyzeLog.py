@@ -38,73 +38,61 @@ from datetime import datetime
 from math import floor
 import os
 
-class TimeTracker:
+class Events:
     def __init__(self):
-        self.events = []
-        self.table = {}
-
-
-    def extractData(self,logLocation):
-        ''' 
-        This fctn takes in log and returns desired parts
-        1. Take in log, sep bw month/day/event
-        2. If event, add line to self.events with 4 parts:
-            date (ie. month/day)
-            duration of event
-            category
-            text description
-        '''
-
-        # Instantiate vars in case missing month/day
-        month = ''
-        day = ''
+        self.data = []
         self.nDays = 0
 
-        # Crazy main for-loop
-        f = open(logLocation, "r")
-        for line in f:
-            line = line.strip()
+        self.month = ''
+        self.day = ''
+        self.hours = 0
 
-            # Note: an equal '=' indicates a comment to ignore
-            if line == '' or line[0] == '=' or line == 'log' or line[0] == '(':
-                pass
 
-            # Line begin w '$' means month/year info
-            elif line[0] == '$':
-                month = str(datetime.strptime(line,'$ %b %Y').month)
+    def getEvents(self):
+        return self.data;
 
-            # Line begin w '#' means day info
-            elif line[0] == '#':
-                day = str(datetime.strptime(line,'# %a %d').day)
-                self.nDays += 1
+    def getDayCount(self):
+        return self.nDays
 
-            # If not info on date, then info on event
-            else:
-                # Get month/day from prev lines
-                date = month + '/' + day
 
-                # Event has 3 parts: loggedTime, desc, categ
-                parts = line.split('_')
+    def setCurrentMonth(self, month):
+        self.month = month
 
-                categ = 'mis' if len(parts) <= 1 else parts[1]
+    def setCurrentDay(self, day):
+        self.day = day
 
-                part = parts[0]
-                iSplit = part.find(' ')
-                loggedTime = part[:iSplit]
-                desc = part[iSplit:].strip()
+    def resetCurrentHour(self):
+        self.hours = 0
 
-                dur = self.getDuration(loggedTime)
+    def incrementDays(self):
+        self.nDays += 1
 
-                # Finally, append line to events
-                self.events.append([date, dur, categ, desc])
 
-        f.close()
+    def addEvent(self, line):
+        # Get month/day from prev lines
+        date = self.month + '/' + self.day
 
-    def getDuration(self, loggedTime):
+        # Event has 3 parts: timestamp, desc, categ
+        parts = line.split('_')
+
+        categ = 'mis' if len(parts) <= 1 else parts[1]
+
+        part = parts[0]
+        iSplit = part.find(' ')
+        timestamp = part[:iSplit]
+        desc = part[iSplit:].strip()
+
+        dur = self.getEventDuration(timestamp)
+
+        # Finally, append line to events
+        self.data.append([date, dur, categ, desc])
+        return
+
+    def getEventDuration(self, timestamp):
         ''' 
-        This is a helper fctn for extractData()
-        It takes a time entry (ie. loggedTime) and returns length of event
-        'loggedTime' is in military time:
+        This is a helper fctn for extractEventFromLog()
+        It takes a time entry (ie. timestamp) and returns length of event
+        'timestamp' is in military time:
             so '930' is '9:30am'
             and '2130' is '9:30pm'
         Some entries are abbrev to 2 numbers - so use hr from prev line
@@ -116,31 +104,62 @@ class TimeTracker:
         '''
 
         # Identify hr and mins:
-        logChars = len(loggedTime)
-        if logChars == 4:
-            hr = loggedTime[0:2]
-            mins = loggedTime[2:]
-        elif logChars == 3:
-            hr = loggedTime[0]
-            mins = loggedTime[1:]
-        elif logChars == 2:
-            hr = floor(self.clock)
-            mins = loggedTime
+        nChars = len(timestamp)
+        if nChars == 4:
+            hr = timestamp[0:2]
+            mins = timestamp[2:]
+        elif nChars == 3:
+            hr = timestamp[0]
+            mins = timestamp[1:]
+        elif nChars == 2:
+            hr = floor(self.hours)
+            mins = timestamp
         else:
-            print('error')
+            raise Exception('ERROR: timestamp has wrong number of chars')
 
-        # Note: 'clock' is hours since midnight
-        if not hasattr(self,'clock'):
-            self.clock = 0.0
-        prev = self.clock
-        self.clock = float(hr) + (float(mins) / 60)
-        dur = self.clock - prev
+        # Note: 'hour' is hours since midnight
+        prev = self.hours
+        self.hours = float(hr) + (float(mins) / 60)
+        dur = self.hours - prev
 
         # For event that goes past midnight (eg. 2359 to 000)
         if dur < 0:
             dur += 24
 
         return dur
+
+
+class TimeTracker:
+    def __init__(self):
+        self.table = {}
+        self.events = Events()
+
+
+    def extractEventFromLog(self, logLocation):
+        with open(logLocation, 'r') as f:
+            for line in f:
+                line = line.strip()
+
+                # Note: an equal '=' indicates a comment to ignore
+                if line == '' or line == 'log' or line[0] == '=' or line[0] == '(':
+                    pass
+
+                # Line begin w '$' means month/year info
+                elif line[0] == '$':
+                    month = str(datetime.strptime(line,'$ %b %Y').month)
+                    self.events.setCurrentMonth(month)
+
+                # Line begin w '#' means day info
+                elif line[0] == '#':
+                    day = str(datetime.strptime(line,'# %a %d').day)
+                    self.events.setCurrentDay(day)
+                    self.events.incrementDays()
+                    #self.events.resetCurrentHour()
+
+                # If not info on date, then info on event
+                else:
+                    self.events.addEvent(line)
+        return
 
     def makeTable(self):
         '''
@@ -161,12 +180,12 @@ class TimeTracker:
 
         # Fill table with placeholder zeros for each categ
         for categ in categList:
-            self.table[categ] = [0] * self.nDays
+            self.table[categ] = [0] * self.events.getDayCount()
 
         # For each event, add its dur to approp cell
         col = -1
         date = ''
-        for line in self.events:
+        for line in self.events.getEvents():
             prev = date
             date = line[0]
             dur = line[1]
@@ -218,10 +237,10 @@ class TimeTracker:
 
         # Set default days to print
         iStart = 0
-        iEnd = self.nDays - 1
+        iEnd = self.events.getDayCount() - 1
 
         # Option 'day', 'start', 'end' - Find arr pos of dates that match
-        for i in range(self.nDays):
+        for i in range(self.events.getDayCount()):
             if day == self.table['day'][i]:
                 iStart = i
                 iEnd = i
@@ -257,10 +276,10 @@ class TimeTracker:
             'recent' is only for most recent day (overrides 'day')
         '''
         if recent:
-            day = self.events[-2][0]
+            day = self.events.getEvents()[-1][0]
 
         total = 0
-        for event in self.events:
+        for event in self.events.getEvents():
             date = event[0]
             dur = event[1]
             categ = event[2]
@@ -296,7 +315,7 @@ def main():
     logPath = os.path.expanduser('~/Dropbox/Tasks/_gitignore/timeLog.to')
 
     t = TimeTracker()
-    t.extractData(logPath)
+    t.extractEventFromLog(logPath)
     t.makeTable()
 
     # Print out results
