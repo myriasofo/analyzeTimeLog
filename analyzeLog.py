@@ -54,6 +54,9 @@ class Events:
     def getDayCount(self):
         return self.nDays
 
+    def getLatestMonthDay(self):
+        return self.month + '/' + self.day
+
 
     def setCurrentMonth(self, month):
         self.month = month
@@ -266,17 +269,16 @@ class TimeTracker:
                 print(line)
             print('')
 
-    def printEvents(self, recent=False, day='', label='', include='', exclude=''):
+    def printEvents(self, pickDay='', label='', include='', exclude=''):
         '''
         Prints selected lines in self.events
         Here are some options:
-            'day' is month/day (same format as 'date')
+            'pickDay' is month/day (same format as 'date')
             'label' is category (same format as 'categ')
             'include' and 'exclude' are str matches
-            'recent' is only for most recent day (overrides 'day')
         '''
-        if recent:
-            day = self.events.getEvents()[-1][0]
+        if pickDay == 'latest':
+            pickDay = self.events.getLatestMonthDay()
 
         total = 0
         for event in self.events.getEvents():
@@ -288,7 +290,7 @@ class TimeTracker:
             # Enact options below
             if 'end' == date:
                 continue
-            elif day and day != date:
+            elif pickDay and pickDay != date:
                 continue
             elif label and label != categ:
                 continue
@@ -307,7 +309,9 @@ class TimeTracker:
 
             total += dur
 
-        print("TOTAL:", "{:3.1f}".format(total))
+        if total != 0:
+            print("TOTAL: " + "{:3.1f}".format(total))
+            print("")
 
 def main():
     # Setting up
@@ -321,9 +325,12 @@ def main():
     # Print out results
     t.printTable()
     #t.printTable(recent=1,raw=1)
-    #t.printTable(recent=0,raw=1,day='7/8',start='',end='')
+    #t.printTable(recent=0,raw=1,pickDay='7/8',start='',end='')
 
-    t.printEvents(recent=1)
+    t.printEvents(pickDay='latest')
+    #t.printEvents(pickDay='6/28')
+    #t.printEvents(pickDay='6/40')
+
     #t.printEvents(label='f')
     #t.printEvents(label='b')
     #t.printEvents(label='bb')
