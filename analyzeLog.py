@@ -66,7 +66,7 @@ class TimeTracker:
             line = line.strip()
 
             # Note: an equal '=' indicates a comment to ignore
-            if line == '' or line[0] == '=' or line == 'log' or line == '(':
+            if line == '' or line[0] == '=' or line == 'log' or line[0] == '(':
                 pass
 
             # Line begin w '$' means month/year info
@@ -84,21 +84,20 @@ class TimeTracker:
                 date = month + '/' + day
 
                 # Event has 3 parts: loggedTime, desc, categ
-                # Use '_' as the delimiter.
+                parts = line.split('_')
 
-                # If categ is missing, add 'mis' 
-                if '_' not in line:
-                    line += '_mis'
+                categ = 'mis' if len(parts) <= 1 else parts[1]
 
-                # Change first space to delimiter
-                line = line.replace(' ', '_', 1)
+                part = parts[0]
+                iSplit = part.find(' ')
+                loggedTime = part[:iSplit]
+                desc = part[iSplit:].strip()
 
-                # Get each part wanted
-                loggedTime, desc, categ = line.split('_')
                 dur = self.getDuration(loggedTime)
 
                 # Finally, append line to events
                 self.events.append([date, dur, categ, desc])
+
         f.close()
 
     def getDuration(self, loggedTime):
@@ -127,6 +126,8 @@ class TimeTracker:
         elif logChars == 2:
             hr = floor(self.clock)
             mins = loggedTime
+        else:
+            print('error')
 
         # Note: 'clock' is hours since midnight
         if not hasattr(self,'clock'):
@@ -303,7 +304,7 @@ def main():
     #t.printTable(recent=1,raw=1)
     #t.printTable(recent=0,raw=1,day='7/8',start='',end='')
 
-    #t.printEvents()
+    t.printEvents(recent=1)
     #t.printEvents(label='f')
     #t.printEvents(label='b')
     #t.printEvents(label='bb')
