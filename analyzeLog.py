@@ -71,11 +71,11 @@ class TimeTracker:
 
             # Line begin w '$' means month/year info
             elif line[0] == '$':
-                month = str(datetime.strptime(line,'$%b %Y').month)
+                month = str(datetime.strptime(line,'$ %b %Y').month)
 
             # Line begin w '#' means day info
             elif line[0] == '#':
-                day = str(datetime.strptime(line,'#%a %d').day)
+                day = str(datetime.strptime(line,'# %a %d').day)
                 self.nDays += 1
 
             # If not info on date, then info on event
