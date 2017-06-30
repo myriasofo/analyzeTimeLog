@@ -190,12 +190,12 @@ class Events:
         return
 
 
-class TimeTracker:
+class EventsCalculator:
     def __init__(self):
         self.table = {}
-        self.events = Events()
+        self.dayCount = 0
 
-    def makeTable(self):
+    def calculateTable(self, events):
         '''
         This fctn takes in self.events and returns table of stats
         1. Make table of placeholders
@@ -203,6 +203,8 @@ class TimeTracker:
         3. Determine cell by categ (row) and day (column)
         NOTE: categ is row bc need same number format for print later
         '''
+
+        self.dayCount = events.getDayCount()
 
         # Gather up all categs desired
         categList = []
@@ -214,12 +216,12 @@ class TimeTracker:
 
         # Fill table with placeholder zeros for each categ
         for categ in categList:
-            self.table[categ] = [0] * self.events.getDayCount()
+            self.table[categ] = [0] * self.dayCount
 
         # For each event, add its dur to approp cell
         col = -1
         date = ''
-        for line in self.events.getEvents():
+        for line in events.getEvents():
             prev = date
             date = line[0]
             dur = line[1]
@@ -270,10 +272,10 @@ class TimeTracker:
 
         # Set default days to print
         iStart = 0
-        iEnd = self.events.getDayCount() - 1
+        iEnd = self.dayCount - 1
 
         # Option 'day', 'start', 'end' - Find arr pos of dates that match
-        for i in range(self.events.getDayCount()):
+        for i in range(self.dayCount):
             if day == self.table['day'][i]:
                 iStart = i
                 iEnd = i
@@ -289,7 +291,7 @@ class TimeTracker:
 
 
         # Final forloop to print all
-        for (categs,fmt) in sections:
+        for (categs, fmt) in sections:
             for categ in categs:
                 line = ''
                 if not raw:
@@ -301,22 +303,23 @@ class TimeTracker:
 
 
 def main():
-    # Setting up
+    ## Setting up
     #logPath = os.path.expanduser('~/dev/analyzeLog/timeLog_example')
     logPath = os.path.expanduser('~/Dropbox/Tasks/_gitignore/timeLog.to')
 
     e = Events()
     e.extractEventFromLog(logPath)
 
-    #t = TimeTracker()
-    #t.extractEventFromLog(logPath)
-    #t.makeTable()
+    c = EventsCalculator()
+    c.calculateTable(e)
 
-    # Print out results
-    #t.printTable()
+
+    ## Aggregate numbers
+    c.printTable()
     #t.printTable(recent=1,raw=1)
     #t.printTable(recent=0,raw=1,pickDay='7/8',start='',end='')
 
+    ## Individual events
     e.printEvents(pickDay='latest')
     e.printEvents(pickDay='6/28')
     #e.printEvents(pickDay='6/40')
