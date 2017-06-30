@@ -66,7 +66,7 @@ class TimeTracker:
             line = line.strip()
 
             # Note: an equal '=' indicates a comment to ignore
-            if line == '' or line[0] == '=' or line == 'log':
+            if line == '' or line[0] == '=' or line == 'log' or line == '(':
                 pass
 
             # Line begin w '$' means month/year info
