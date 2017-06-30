@@ -48,7 +48,6 @@ class Event:
     def __getattr__(self, attr):
         return self.get(attr)
 
-
 class Events:
     def __init__(self):
         self.data = []
@@ -210,16 +209,8 @@ class EventsCalculator:
 
         self.dayCount = events.getDayCount()
 
-        # Gather up all categs desired
-        categList = []
-        categList += ['day', 'tot', 'mis', 'org']
-        categList += ['tsk', 'brk', 'fxd']
-        for ch in ['t', 'b', 'f']:
-            for i in (1, 2, 3):
-                categList.append(ch * i)
-
         # Fill table with placeholder zeros for each categ
-        for categ in categList:
+        for categ in self.getCategList():
             self.table[categ] = [0] * self.dayCount
 
         # For each event, add its dur to approp cell
@@ -246,6 +237,18 @@ class EventsCalculator:
                     if event.categ[0] == i:
                         self.table[j][col] += 1
             prev = event.date
+
+        return
+
+    def getCategList(self):
+        # Gather up all categs desired
+        categList = []
+        categList += ['day', 'tot', 'mis', 'org']
+        categList += ['tsk', 'brk', 'fxd']
+        for ch in ['t', 'b', 'f']:
+            for i in (1, 2, 3):
+                categList.append(ch * i)
+        return categList
 
     def printTable(self, recent=False, raw=False, day='', start='', end=''):
         '''
