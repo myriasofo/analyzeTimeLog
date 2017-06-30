@@ -38,6 +38,17 @@ from datetime import datetime
 from math import floor
 import os
 
+class Event:
+    def __init__(self, date, dur, categ, desc):
+        self.date = date
+        self.dur = dur
+        self.categ = categ
+        self.desc = desc
+
+    def __getattr__(self, attr):
+        return self.get(attr)
+
+
 class Events:
     def __init__(self):
         self.data = []
@@ -85,23 +96,20 @@ class Events:
         return
 
     def addEvent(self, line):
-        # Get month/day from prev lines
-        date = self.month + '/' + self.day
-
         # Event has 3 parts: timestamp, desc, categ
         parts = line.split('_')
-
-        categ = 'mis' if len(parts) <= 1 else parts[1]
-
         part = parts[0]
         iSplit = part.find(' ')
         timestamp = part[:iSplit]
-        desc = part[iSplit:].strip()
-
-        dur = self.getEventDuration(timestamp)
 
         # Finally, append line to events
-        self.data.append([date, dur, categ, desc])
+        #self.data.append([date, dur, categ, desc])
+        date = self.month + '/' + self.day
+        dur = self.getEventDuration(timestamp)
+        categ = 'mis' if len(parts) <= 1 else parts[1]
+        desc = part[iSplit:].strip()
+
+        self.data.append(Event(date, dur, categ, desc))
         return
 
     def getEventDuration(self, timestamp):
@@ -156,39 +164,35 @@ class Events:
 
         total = 0
         for event in self.getEvents():
-            date = event[0]
-            dur = event[1]
-            eventCateg = event[2]
-            desc = event[3]
-
+            #print(event)
+            #print(event.date)
             # Enact options below
-            if 'end' == date:
+            if 'end' == event.date:
                 continue
-            elif pickDay and pickDay != date:
+            elif pickDay and pickDay != event.date:
                 continue
-            elif categ and categ != eventCateg:
+            elif categ and categ != event.categ:
                 continue
-            elif include and include not in desc:
+            elif include and include not in event.desc:
                 continue
-            elif exclude and exclude in desc:
+            elif exclude and exclude in event.desc:
                 continue
 
             # Print day, dur, categ, desc
             line = ''
-            line += "{:>5}".format(date) + ' '
-            line += "{:4.1f}".format(dur) + ' '
-            line += "{:3}".format(eventCateg) + ' '
-            line += desc
+            line += "{:>5}".format(event.date) + ' '
+            line += "{:4.1f}".format(event.dur) + ' '
+            line += "{:3}".format(event.categ) + ' '
+            line += event.desc
             print(line)
 
-            total += dur
+            total += event.dur
 
         if total != 0:
             print("TOTAL: " + "{:3.1f}".format(total))
             print("")
 
         return
-
 
 class EventsCalculator:
     def __init__(self):
@@ -220,33 +224,28 @@ class EventsCalculator:
 
         # For each event, add its dur to approp cell
         col = -1
-        date = ''
-        for line in events.getEvents():
-            prev = date
-            date = line[0]
-            dur = line[1]
-            categ = line[2]
-            desc = line[3]
-
+        prev = ''
+        for event in events.getEvents():
             # For first event of each day
             # Note: first should always be wakeup, so don't count
-            if date != prev:
+            if event.date != prev:
                 col += 1
-                self.table['day'][col] = date
+                self.table['day'][col] = event.date
 
             # Now get stats!
             else:
-                self.table[categ][col] += dur
-                self.table['tot'][col] += dur
+                self.table[event.categ][col] += event.dur
+                self.table['tot'][col] += event.dur
 
                 # Special categs
-                if 'orgz' in desc:
-                    self.table['org'][col] += dur
+                if 'orgz' in event.desc:
+                    self.table['org'][col] += event.dur
 
                 # Not just hours, but also freq
                 for i,j in [('t', 'tsk'), ('b', 'brk'), ('f', 'fxd')]:
-                    if categ[0] == i:
+                    if event.categ[0] == i:
                         self.table[j][col] += 1
+            prev = event.date
 
     def printTable(self, recent=False, raw=False, day='', start='', end=''):
         '''
