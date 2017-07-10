@@ -73,11 +73,16 @@ class Events:
 
     def extractEventFromLog(self, logLocation):
         with open(logLocation, 'r') as f:
+            skip = False
             for line in f:
                 line = line.strip()
 
-                # Note: an equal '=' indicates a comment to ignore
-                if line == '' or line == 'log' or line[0] == '=' or line[0] == '(':
+                # Skip comments or blank spaces
+                if line == '/*':
+                    skip = True
+                elif line == '*/':
+                    skip = False
+                elif skip or line == '' or line == 'log' or line[0] == '=' or line[0] == '(':
                     pass
 
                 # Line begin w '$' means month/year info
@@ -323,7 +328,7 @@ def main():
 
     ## Individual events
     e.printEvents(pickDay='latest')
-    e.printEvents(pickDay='6/28')
+    #e.printEvents(pickDay='6/28')
     #e.printEvents(pickDay='6/40')
 
     #t.printEvents(label='f')
