@@ -35,7 +35,7 @@ WHY: To work more on high priority tasks
 '''
 
 from datetime import datetime
-from math import floor
+import math
 import os
 
 class Event:
@@ -140,7 +140,7 @@ class Events:
             hr = timestamp[0]
             mins = timestamp[1:]
         elif nChars == 2:
-            hr = floor(self.hours)
+            hr = math.floor(self.hours)
             mins = timestamp
         else:
             raise Exception('ERROR: timestamp has wrong number of chars')
@@ -268,12 +268,12 @@ class EventsCalculator:
         # Pick out categs and their formatting to print
         sections = []
         if not raw:
-            sections.append((['day'], '{:>6}'))
-        sections.append((['t','tt','ttt'], '{:6.1f}'))
-        sections.append((['b','bb','bbb'], '{:6.1f}'))
-        sections.append((['f','ff'], '{:6.1f}'))
-        sections.append((['tsk','brk','fxd'], '{:6}'))
-        sections.append((['org','tot','mis'], '{:6.1f}'))
+            sections.append((['day'], 'text'))
+        sections.append((['t','tt','ttt'], 'number'))
+        sections.append((['b','bb','bbb'], 'number'))
+        sections.append((['f','ff'], 'number'))
+        #sections.append((['tsk','brk','fxd'], 'number'))
+        sections.append((['org','tot','mis'], 'number'))
         #sections.append(([],''))
 
 
@@ -298,16 +298,31 @@ class EventsCalculator:
 
 
         # Final forloop to print all
-        for (categs, fmt) in sections:
+        for (categs, cellType) in sections:
             for categ in categs:
                 line = ''
                 if not raw:
-                    line += '{:3}'.format(categ)
+                    line += self.formatCell(categ, 'title')
                 for i in range(iStart, iEnd+1):
-                    line += fmt.format(self.table[categ][i])
+                    cellValue = self.table[categ][i]
+                    line += self.formatCell(cellValue, cellType)
                 print(line)
             print('')
 
+    def formatCell(self, cellValue, cellType):
+        if cellType == 'title':
+            return '{:3}'.format(cellValue)
+        elif cellType == 'text':
+            return '{:>6}'.format(cellValue)
+        elif cellType == 'number':
+            temp = '{:.1f}'.format(cellValue)
+            if temp == '0.0':
+                temp = '-'
+            elif temp[0] == '0':
+                temp = temp[1:]
+            return '{:>6}'.format(temp)
+        return 'xxx'
+        
 
 def main():
     ## Setting up
