@@ -255,7 +255,7 @@ class EventsCalculator:
                 categList.append(ch * i)
         return categList
 
-    def printTable(self, recent=False, raw=False, day='', start='', end=''):
+    def printTable(self, recent=0, raw=False, day='', start='', end=''):
         '''
         Print table of stats (nicely)
         Options:
@@ -292,9 +292,11 @@ class EventsCalculator:
                 iEnd = i
 
         # Option 'recent' take highest precedent
-        if recent:
-            iStart = self.nDays - 1
-            iEnd = iStart
+        if recent > 0:
+            if recent > self.dayCount:
+                recent = self.dayCount
+            iStart = self.dayCount - recent
+            iEnd = self.dayCount - 1
 
 
         # Final forloop to print all
@@ -322,7 +324,7 @@ class EventsCalculator:
                 temp = temp[1:]
             return '{:>6}'.format(temp)
         return 'xxx'
-        
+
 
 def main():
     ## Setting up
@@ -337,9 +339,10 @@ def main():
 
 
     ## Aggregate numbers
-    c.printTable()
-    #t.printTable(recent=1,raw=1)
-    #t.printTable(recent=0,raw=1,pickDay='7/8',start='',end='')
+    #c.printTable()
+    c.printTable(recent=8)
+    #c.printTable(recent=1,raw=1)
+    #c.printTable(recent=0,raw=1,pickDay='7/8',start='',end='')
 
     ## Individual events
     e.printEvents(pickDay='latest')
