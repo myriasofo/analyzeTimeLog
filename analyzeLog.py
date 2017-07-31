@@ -340,7 +340,7 @@ def main():
 
     ## Aggregate numbers
     #c.printTable()
-    c.printTable(recent=8)
+    c.printTable(recent=6)
     #c.printTable(recent=1,raw=1)
     #c.printTable(recent=0,raw=1,pickDay='7/8',start='',end='')
 
