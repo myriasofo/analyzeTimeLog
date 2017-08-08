@@ -113,7 +113,9 @@ class Events:
         #self.data.append([date, dur, categ, desc])
         date = self.month + '/' + self.day
         dur = self.getEventDuration(timestamp)
-        categ = '' if len(parts) <= 1 else parts[1]
+        if len(parts) <= 1 or parts[1] not in CATEGORIES:
+            raise ValueError('This line has a bad categ:\n\n{}\n{}'.format(date, line))
+        categ = parts[1]
         desc = part[iSplit:].strip()
 
         self.data.append(Event(date, dur, categ, desc))
@@ -159,12 +161,6 @@ class Events:
 
         return dur
 
-    def getEventCategory(self, categ):
-        if categ == '' or categ not in CATEGORIES:
-            return 'err'
-        else:
-            return categ
-
     def printEvents(self, pickDay='', categ='', include='', exclude=''):
         '''
         Here are the options:
@@ -195,7 +191,7 @@ class Events:
             line = ''
             line += "{:>5}".format(event.date) + ' '
             line += "{:4.1f}".format(event.dur) + ' '
-            line += "{:3}".format(self.getEventCategory(event.categ)) + ' '
+            line += "{:3}".format(event.categ) + ' '
             line += event.desc
             print(line)
 
@@ -239,10 +235,7 @@ class EventsCalculator:
 
             # Now get stats!
             else:
-                if event.categ in self.table:
-                    self.table[event.categ][col] += event.dur
-                else:
-                    self.table['err'][col] += event.dur
+                self.table[event.categ][col] += event.dur
                 self.table['tot'][col] += event.dur
 
                 # Special categs
@@ -260,7 +253,7 @@ class EventsCalculator:
     def getCategList(self):
         # Gather up all categs desired
         categList = copy.copy(CATEGORIES)
-        categList += ['day', 'tot', 'err', 'org']
+        categList += ['day', 'tot', 'org']
         categList += ['tsk', 'brk', 'fxd']
         return categList
 
@@ -282,7 +275,7 @@ class EventsCalculator:
         sections.append((['b','bb','bbb'], 'number'))
         sections.append((['f','ff'], 'number'))
         #sections.append((['tsk','brk','fxd'], 'number'))
-        sections.append((['org','tot','err'], 'number'))
+        sections.append((['org','tot'], 'number'))
         #sections.append(([],''))
 
 
@@ -319,6 +312,7 @@ class EventsCalculator:
                     line += self.formatCell(cellValue, cellType)
                 print(line)
             print('')
+        print('')
 
     def formatCell(self, cellValue, cellType):
         if cellType == 'title':
@@ -348,8 +342,8 @@ def main():
 
 
     ## Aggregate numbers
-    #c.printTable()
-    c.printTable(recent=6)
+    c.printTable()
+    #c.printTable(recent=6)
     #c.printTable(recent=1,raw=1)
     #c.printTable(recent=0,raw=1,pickDay='7/8',start='',end='')
 
