@@ -34,9 +34,12 @@ WHY: To work more on high priority tasks
         Control time socializing
 '''
 
-from datetime import datetime
+import datetime
 import math
 import os
+import copy
+
+CATEGORIES = [ch*i for ch in ['t', 'b', 'f'] for i in (1, 2, 3)]
 
 class Event:
     def __init__(self, date, dur, categ, desc):
@@ -87,11 +90,11 @@ class Events:
 
                 # Line begin w '$' means month/year info
                 elif line[0] == '$':
-                    self.month = str(datetime.strptime(line,'$ %b %Y').month)
+                    self.month = str(datetime.datetime.strptime(line,'$ %b %Y').month)
 
                 # Line begin w '#' means day info
                 elif line[0] == '#':
-                    self.day = str(datetime.strptime(line,'# %a %d').day)
+                    self.day = str(datetime.datetime.strptime(line,'# %a %d').day)
                     self.incrementDays()
 
                 # If not info on date, then info on event
@@ -110,7 +113,7 @@ class Events:
         #self.data.append([date, dur, categ, desc])
         date = self.month + '/' + self.day
         dur = self.getEventDuration(timestamp)
-        categ = 'mis' if len(parts) <= 1 else parts[1]
+        categ = '' if len(parts) <= 1 else parts[1]
         desc = part[iSplit:].strip()
 
         self.data.append(Event(date, dur, categ, desc))
@@ -156,6 +159,12 @@ class Events:
 
         return dur
 
+    def getEventCategory(self, categ):
+        if categ == '' or categ not in CATEGORIES:
+            return 'err'
+        else:
+            return categ
+
     def printEvents(self, pickDay='', categ='', include='', exclude=''):
         '''
         Here are the options:
@@ -186,7 +195,7 @@ class Events:
             line = ''
             line += "{:>5}".format(event.date) + ' '
             line += "{:4.1f}".format(event.dur) + ' '
-            line += "{:3}".format(event.categ) + ' '
+            line += "{:3}".format(self.getEventCategory(event.categ)) + ' '
             line += event.desc
             print(line)
 
@@ -230,7 +239,10 @@ class EventsCalculator:
 
             # Now get stats!
             else:
-                self.table[event.categ][col] += event.dur
+                if event.categ in self.table:
+                    self.table[event.categ][col] += event.dur
+                else:
+                    self.table['err'][col] += event.dur
                 self.table['tot'][col] += event.dur
 
                 # Special categs
@@ -238,21 +250,18 @@ class EventsCalculator:
                     self.table['org'][col] += event.dur
 
                 # Not just hours, but also freq
-                for i,j in [('t', 'tsk'), ('b', 'brk'), ('f', 'fxd')]:
-                    if event.categ[0] == i:
-                        self.table[j][col] += 1
+                #for i,j in [('t', 'tsk'), ('b', 'brk'), ('f', 'fxd')]:
+                #    if event.categ[0] == i:
+                #        self.table[j][col] += 1
             prev = event.date
 
         return
 
     def getCategList(self):
         # Gather up all categs desired
-        categList = []
-        categList += ['day', 'tot', 'mis', 'org']
+        categList = copy.copy(CATEGORIES)
+        categList += ['day', 'tot', 'err', 'org']
         categList += ['tsk', 'brk', 'fxd']
-        for ch in ['t', 'b', 'f']:
-            for i in (1, 2, 3):
-                categList.append(ch * i)
         return categList
 
     def printTable(self, recent=0, raw=False, day='', start='', end=''):
@@ -273,7 +282,7 @@ class EventsCalculator:
         sections.append((['b','bb','bbb'], 'number'))
         sections.append((['f','ff'], 'number'))
         #sections.append((['tsk','brk','fxd'], 'number'))
-        sections.append((['org','tot','mis'], 'number'))
+        sections.append((['org','tot','err'], 'number'))
         #sections.append(([],''))
 
 
@@ -319,7 +328,7 @@ class EventsCalculator:
         elif cellType == 'number':
             temp = '{:.1f}'.format(cellValue)
             if temp == '0.0':
-                temp = '-'
+                temp = ' '
             elif temp[0] == '0':
                 temp = temp[1:]
             return '{:>6}'.format(temp)
