@@ -94,7 +94,7 @@ class Events:
 
                 # Line begin w '#' means day info
                 elif line[0] == '#':
-                    self.day = str(datetime.datetime.strptime(line,'# %a %d').day)
+                    self.day = str(datetime.datetime.strptime(line,'# %a|%d').day)
                     self.incrementDays()
 
                 # If not info on date, then info on event
