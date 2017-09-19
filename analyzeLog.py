@@ -81,7 +81,7 @@ class Events:
                 line = line.strip()
 
                 # Skip comments or blank spaces
-                if line == '/*':
+                if line[:2] == '/*':
                     skip = True
                 elif line == '*/':
                     skip = False

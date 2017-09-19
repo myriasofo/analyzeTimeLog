@@ -1,44 +1,50 @@
-log
-    $May 2015
-        #Tue 5
-            940 wakeup_fff
-            1709 orgz_tt
-            30 reading about dba_tt
-            51 reading post from riskology_tt
-            53 orgz calendar
-            1802 fb replying to june on seattle_bb
-            2015 orgz dilig_t
-            2347 watching tv special on iran_ttt
+$ May 2015
+    # Tue|5
+        940 wakeup_fff
+        1709 orgz_tt
+        30 reading about dba_tt
+        51 reading post from riskology_tt
+        53 orgz calendar_tt
+        1802 fb replying to june on seattle_bb
+        2015 orgz dilig_t
+        2347 watching tv special on iran_ttt
 
-        #Wed 6
-            840 wokeup_fff
-            59 orgz misc
-            930 exercise + shower_ff
-            2303 new version of foundation_t
-            12 practicing foundation_t
-        #Thu 7
-            930 woke up_fff
-            1130 traveling to uw
-            1300 worked on clrs ch6_tt
-            2100 event without categ
-            030 another_ttt
-    $Nov 2015
-        #Fri 12
-            1000 wakeup_fff
-            1200 orgz_tt
-            30 reading about dba
-            45 reading post from riskology_tt
-            1345 madeup_b
-            1400 madeup2_bb
-            2300 finally_b
-            2345 but yet_tt
-    $Dec 2015
-        #Sat 22
-            1000 wakeup_fff
-            1200 orgz_tt
-            30 reading about dba
-            45 reading post from riskology_tt
-            1345 madeup_b
-            1400 madeup2_bb
-            2300 finally_b
-            2345 but yet_tt
+    # Wed|6
+        = My example comment
+        840 wokeup_fff
+        59 orgz misc_tt
+        930 exercise + shower_ff
+        1303 new version of foundation_t
+        12 practicing foundation_t
+
+    /* My block comment
+    # Thu|7
+        930 woke up_fff
+        1130 traveling to uw_f
+        1300 worked on clrs ch6_tt
+        (2100 event without categ
+        030 another_ttt
+    */
+        
+$ Nov 2015
+    # Fri|12
+        1000 wakeup_fff
+        1200 orgz_tt
+        30 reading about dba_t
+        45 reading post from riskology_tt
+        1345 madeup_b
+        1400 madeup2_bb
+        2300 finally_b
+        2345 but yet_tt
+
+$ Dec 2015
+    # Sat|22
+        1000 wakeup_fff
+        1200 orgz_tt
+        30 reading about dba_t
+        45 reading post from riskology_tt
+        1345 madeup_b
+        1400 madeup2_bb
+        2300 finally_b
+        2345 but yet_tt
+
