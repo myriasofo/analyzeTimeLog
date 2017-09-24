@@ -332,7 +332,7 @@ class EventsCalculator:
 def main():
     ## Setting up
     #logPath = os.path.expanduser('~/dev/analyzeLog/timeLog_example')
-    logPath = os.path.expanduser('~/Dropbox/Tasks/_gitignore/timeLog.to')
+    logPath = os.path.expanduser('~/Dropbox/Notes/_specials/timeLog.to')
 
     e = Events()
     e.extractEventFromLog(logPath)
