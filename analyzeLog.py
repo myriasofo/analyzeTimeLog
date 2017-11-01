@@ -349,8 +349,8 @@ def main():
 
     ## Individual events
     e.printEvents(pickDay='latest')
+    #e.printEvents(include='pylint')
     #e.printEvents(pickDay='6/28')
-    #e.printEvents(pickDay='6/40')
 
     #t.printEvents(label='f')
     #t.printEvents(label='b')
