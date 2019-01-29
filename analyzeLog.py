@@ -39,7 +39,8 @@ import math
 import os
 import copy
 
-CATEGORIES = [ch*i for ch in ['t', 'b', 'f'] for i in (1, 2, 3)]
+CATEGORIES = ['t', 'tt', 'ttt', 'b', 'bb', 'bbb', 'f', 'ff', 'fff']
+IGNORED_CATEGORIES = ['fff']
 
 class Event:
     def __init__(self, date, dur, categ, desc):
@@ -233,6 +234,9 @@ class EventsCalculator:
                 col += 1
                 self.table['day'][col] = event.date
 
+            elif event.categ in IGNORED_CATEGORIES:
+                continue
+
             # Now get stats!
             else:
                 self.table[event.categ][col] += event.dur
@@ -246,6 +250,7 @@ class EventsCalculator:
                 #for i,j in [('t', 'tsk'), ('b', 'brk'), ('f', 'fxd')]:
                 #    if event.categ[0] == i:
                 #        self.table[j][col] += 1
+
             prev = event.date
 
         return
