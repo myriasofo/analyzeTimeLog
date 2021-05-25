@@ -173,6 +173,7 @@ class Events:
             pickDay = self.getLatestMonthDay()
 
         total = 0
+        is_first = True
         for event in self.getEvents():
             #print(event)
             #print(event.date)
@@ -196,7 +197,10 @@ class Events:
             line += event.desc
             print(line)
 
-            total += event.dur
+            if is_first:
+                is_first = False
+            else:
+                total += event.dur
 
         if total != 0:
             print("TOTAL: " + "{:3.1f}".format(total))
